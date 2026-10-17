@@ -40,7 +40,7 @@ function Header() {
   }, [])
   return <header className={'site-header' + (scrolled ? ' scrolled' : '')}>
     <div className="container header-inner">
-      <a href="#inicio" className="brand" aria-label="HUGIN y MUNIN, ir al inicio" onClick={() => setOpen(false)}><span className="brand-mark" aria-hidden="true"><i /><i /><i /></span>HUGIN <em>&</em> MUNIN</a>
+      <a href="#inicio" className="brand" aria-label="HUGIN y MUNIN, ir al inicio" onClick={() => setOpen(false)}><img className="brand-mark" src="/favicon.png" alt="" width="32" height="32" />HUGIN <em>&</em> MUNIN</a>
       <nav className={'nav' + (open ? ' nav-open' : '')} aria-label="Navegación principal">{nav.map(([label, href]) => <a key={href} href={href} onClick={() => setOpen(false)}>{label}</a>)}</nav>
       <span className="header-index">RLI / 2026</span>
       <button className="menu-toggle" type="button" aria-label={open ? 'Cerrar menú' : 'Abrir menú'} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X size={23} /> : <Menu size={23} />}</button>
@@ -118,7 +118,7 @@ function App() {
 
       <section className="section impact-section" id="impacto"><div className="container"><SectionHeading number="06" eyebrow="IMPACTO POTENCIAL" title="Más claridad para actuar cuando cada decisión cuenta.">La intención es ofrecer continuidad de información y un mejor panorama para coordinar esfuerzos en la post-emergencia.</SectionHeading><div className="impact-grid"><div className="impact-lead reveal"><span className="impact-orbit"><i /></span><strong>INFORMACIÓN<br />QUE ENCUENTRA<br />SU CAMINO.</strong><small>HUGIN & MUNIN / VISIÓN</small></div><div className="impact-points">{[{ title: 'Coordinar rescates', text: 'Reunir indicios y reportes para que los equipos evalúen dónde concentrar su atención.' }, { title: 'Sostener el flujo de información', text: 'Explorar vías temporales para trasladar datos entre sectores sin conectividad.' }, { title: 'Acompañar comunidades aisladas', text: 'Dar visibilidad a necesidades que podrían quedar fuera de los canales habituales.' }].map((item, index) => <article className="impact-point reveal" key={item.title}><span>0{index + 1}</span><div><h3>{item.title}</h3><p>{item.text}</p></div><ArrowUpRight size={19} /></article>)}</div></div></div></section>
     </main>
-    <footer className="footer"><div className="container footer-main"><div><div className="footer-brand">HUGIN <em>&</em> MUNIN</div><p>Inteligencia conectada para la post-emergencia.</p></div><a href="#inicio" className="back-top">VOLVER ARRIBA <ArrowUpRight size={18} /></a></div><div className="container footer-bottom"><span>PROPUESTA PARA EL RALLY LATINOAMERICANO DE INNOVACIÓN 2026</span><span>DESAFÍO 09 · OPTIMIZACIÓN Y PRIORIZACIÓN DE RECURSOS Y ESFUERZOS EN LA POST-EMERGENCIA</span></div></footer>
+    <footer className="footer"><div className="container footer-main"><div><img className="footer-logo" src="/logo-hugin-munin.png" alt="HUGIN & MUNIN" width="260" height="116" loading="lazy" /><p>Inteligencia conectada para la post-emergencia.</p><p className="footer-team">Desarrollado por <strong>INGESIST</strong></p></div><a href="#inicio" className="back-top">VOLVER ARRIBA <ArrowUpRight size={18} /></a></div><div className="container footer-bottom"><span>PROPUESTA PARA EL RALLY LATINOAMERICANO DE INNOVACIÓN 2026</span><span>DESAFÍO 09 · OPTIMIZACIÓN Y PRIORIZACIÓN DE RECURSOS Y ESFUERZOS EN LA POST-EMERGENCIA</span></div></footer>
   </>
 }
 

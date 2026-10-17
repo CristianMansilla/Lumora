@@ -1,5 +1,6 @@
 import { CatmullRomCurve3, Vector3 } from 'three'
 import { sectors } from './scenario'
+import { createNetworkModel, type NetworkSnapshot } from './network'
 
 export type MissionPhase = 'idle' | 'running' | 'paused' | 'complete'
 export type DroneStatus = 'En base' | 'Despegando' | 'En ruta' | 'Inspeccionando' | 'Regresando' | 'Aterrizando' | 'Finalizado'
@@ -117,6 +118,7 @@ export type MissionSnapshot = {
   currentSector: string
   droneStatuses: DroneStatus[]
   events: MissionEvent[]
+  network: NetworkSnapshot
 }
 
 export type MissionStore = ReturnType<typeof createMissionStore>
@@ -127,11 +129,13 @@ export function createMissionStore() {
   let lastPublish = 0
   let events: MissionEvent[] = []
   let recognizedIds: string[] = []
+  let network = createNetworkModel()
+  let huginFinished = false
   const listeners = new Set<() => void>()
   const derive = (): MissionSnapshot => {
     const nextRecognized = recognitionTimes.filter((entry) => entry.time <= elapsed).map((entry) => entry.sectorId)
     if (nextRecognized.join('|') !== recognizedIds.join('|')) recognizedIds = nextRecognized
-    const poses = DRONE_PLANS.map((_, index) => flightAt(index, elapsed))
+    const poses = DRONE_PLANS.map((_, index) => flightAt(index, Math.min(elapsed, MISSION_DURATION)))
     const inspecting = poses.map((pose) => pose.scanningSectorId).filter((id): id is string => Boolean(id))
     return {
       phase, elapsed, percent: Math.min(100, Math.round(elapsed / MISSION_DURATION * 100)),
@@ -139,7 +143,7 @@ export function createMissionStore() {
       recognizedIds,
       currentSector: inspecting.length ? inspecting.map((id) => sectors.find((sector) => sector.id === id)?.name ?? id).join(' · ') : 'Ninguno',
       droneStatuses: poses.map((pose) => phase === 'idle' ? 'En base' : pose.status),
-      events,
+      events, network: network.snapshot(),
     }
   }
   let snapshot = derive()
@@ -151,22 +155,28 @@ export function createMissionStore() {
     advance: (delta: number) => {
       if (phase !== 'running') return
       const previous = elapsed
-      elapsed = Math.min(MISSION_DURATION, elapsed + Math.min(delta, .5))
+      elapsed += Math.min(delta, .5)
       const reached = milestones.filter((entry) => entry.time > previous && entry.time <= elapsed)
       if (reached.length) events = [...events, ...reached]
-      if (elapsed >= MISSION_DURATION) {
-        phase = 'complete'
+      for (const entry of recognitionTimes.filter((item) => item.time > previous && item.time <= elapsed)) network.onRecognized(entry.sectorId, entry.time)
+      if (elapsed >= MISSION_DURATION && !huginFinished) {
+        huginFinished = true
         events = [...events, { time: MISSION_DURATION, text: 'Reconocimiento finalizado. Los tres drones regresaron a base.' }]
       }
+      network.advance(elapsed)
+      if (huginFinished && network.isSettled()) phase = 'complete'
       if (elapsed - lastPublish >= .15 || reached.length || phase === 'complete') { lastPublish = elapsed; publish() }
     },
     start: () => {
-      elapsed = 0; lastPublish = 0; phase = 'running'
+      elapsed = 0; lastPublish = 0; phase = 'running'; huginFinished = false; network = createNetworkModel()
       events = [{ time: 0, text: 'Reconocimiento iniciado. HUGIN-01 despegó del centro de operaciones.' }]
       publish()
     },
     pause: () => { if (phase === 'running') { phase = 'paused'; events = [...events, { time: elapsed, text: 'Misión pausada.' }]; publish() } },
     resume: () => { if (phase === 'paused') { phase = 'running'; events = [...events, { time: elapsed, text: 'Misión reanudada.' }]; publish() } },
-    reset: () => { elapsed = 0; lastPublish = 0; phase = 'idle'; events = []; recognizedIds = []; publish() },
+    startNetwork: () => { network.start(elapsed); if (network.snapshot().started) { if (phase === 'complete') phase = 'running'; publish() } },
+    failLink: () => { network.fail(elapsed, recognizedIds.includes('west')); if (phase === 'complete' && !network.isSettled()) phase = 'running'; publish() },
+    restoreLink: () => { network.restore(elapsed); publish() },
+    reset: () => { elapsed = 0; lastPublish = 0; phase = 'idle'; huginFinished = false; events = []; recognizedIds = []; network = createNetworkModel(); publish() },
   }
 }
