@@ -25,14 +25,14 @@
 .sim-control-buttons button:hover{background:#235563;border-color:var(--cyan)}
 .sim-control-buttons .reset-camera{width:auto;display:inline-flex;gap:8px;padding:0 12px;margin-left:4px;color:#e8f8f7}
 .reset-camera span{font:700 9px "Courier New",monospace;letter-spacing:.08em;white-space:nowrap}
-.simulator-sidebar{display:flex;flex-direction:column;background:linear-gradient(145deg,#122f3e,#0a2432);min-width:0}
+.simulator-sidebar{display:flex;flex-direction:column;background:linear-gradient(145deg,#122f3e,#0a2432);min-width:0;max-height:774px;overflow-y:auto;scrollbar-color:#438b99 #0a2432;scrollbar-width:thin}
 .sidebar-block{padding:24px 23px;border-bottom:1px solid #86dae12a}
 .sidebar-label{font:750 9px "Courier New",monospace;letter-spacing:.15em;color:#7fe5ea;display:flex;justify-content:space-between;gap:8px}
 .sidebar-label b{font-weight:500;color:#89a7b2}
 .sector-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:16px}
 .sector-buttons button{padding:10px 3px;background:#1b4050;border:1px solid #4d82935e;color:#c7dce0;font-size:11px;font-weight:650;transition:background .2s,border-color .2s,color .2s}
 .sector-buttons button:hover,.sector-buttons button.active{background:#58dce1;color:#092633;border-color:#8aebef}
-.status-block{flex:1}
+.status-block{flex:none}
 .selection-kind{color:#ffb18a}
 .status-block h3{font-size:26px;line-height:1.15;letter-spacing:-.035em;margin:17px 0 22px;min-height:30px}
 .status-rows{border-top:1px solid #86dae134}
@@ -52,6 +52,16 @@
 .legend-block .legend-medium{background:#eaba72}.legend-block .legend-high{background:#ff8d67}.legend-block .legend-flood{background:#58a4bb}
 .sim-disclaimer{display:flex;gap:9px;align-items:start;color:#94b1bd;font-size:11px;line-height:1.5;padding:0 23px 21px;margin:0}
 .sim-disclaimer svg{flex:none;color:#79dce2;margin-top:1px}
+.mission-controls{min-height:78px;padding:13px 18px 13px 22px;border-top:1px solid #75d7df37;background:#123442;display:flex;align-items:center;justify-content:space-between;gap:18px}
+.mission-control-title{display:grid;gap:5px}.mission-control-title span{font:700 9px "Courier New",monospace;letter-spacing:.15em;color:#77dce4}.mission-control-title strong{font-size:13px;color:#e2f3f3}
+.mission-control-buttons{display:flex;gap:8px;flex-wrap:wrap}.mission-control-buttons button{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:#1b4654;border:1px solid #75d7df63;color:#d6eef0;font:700 10px "Courier New",monospace;cursor:pointer;transition:background .2s}.mission-control-buttons button:hover{background:#2b6571}.mission-control-buttons .mission-primary{background:#64dce2;color:#092938;border-color:#9ef0f0}.mission-control-buttons .mission-primary:hover{background:#9bf0f0}
+.mission-progress{height:6px;background:#244b59;margin-top:15px;overflow:hidden}.mission-progress span{display:block;height:100%;background:linear-gradient(90deg,#59dbe0,#b1f7ed);transition:width .15s linear}
+.mission-metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.mission-metrics>div{display:grid;gap:5px}.mission-metrics strong{font:500 27px "Courier New",monospace;color:#e8fbf7}.mission-metrics span{font:700 8px "Courier New",monospace;letter-spacing:.05em;color:#91bac3}.mission-current{font-size:11px;color:#97bdc7;margin:16px 0 0}.mission-current strong{color:#e2f5f4;font-weight:600}
+.sector-buttons button.recognized:not(.active){border-color:#5fd5dd;color:#9ff1ee;background:#1d4c58}
+.drone-buttons{display:grid;gap:6px;margin-top:15px}.drone-buttons button{display:flex;align-items:center;gap:8px;text-align:left;padding:9px;background:#173c4b;border:1px solid #5d9ba744;color:#daeef0;cursor:pointer}.drone-buttons button:hover,.drone-buttons button.active{border-color:#80e2e5;background:#235565}.drone-buttons button strong{font:700 11px "Courier New",monospace}.drone-buttons button>span:last-child{margin-left:auto;color:#a4c4ca;font-size:10px}.drone-dot{width:7px;height:7px;border-radius:50%;box-shadow:0 0 10px currentColor;flex:none}
+.mission-events{max-height:150px;overflow-y:auto;margin-top:14px;scrollbar-width:thin}.mission-events>div{display:flex;gap:9px;padding:8px 0;border-top:1px solid #86dae122;color:#b9d2d6;font-size:10px;line-height:1.4}.mission-events time{color:#70e1e7;font:700 10px "Courier New",monospace;flex:none}.mission-events p{font-size:11px;color:#8faab4;margin:0}
+@media(max-width:1050px){.simulator-sidebar{max-height:none;overflow:visible;grid-template-columns:1fr 1fr}.mission-status{grid-column:1}.drone-picker{grid-column:1}.mission-log{grid-column:2}.status-block{grid-column:2;grid-row:1 / span 3}}
+@media(max-width:650px){.mission-controls{display:block;padding:15px}.mission-control-title{margin-bottom:12px}.mission-control-buttons button{flex:1}.simulator-sidebar{display:block}.mission-events{max-height:190px}}
 @media(max-width:1050px){.simulator-shell{grid-template-columns:1fr}.simulator-main{border-right:0}.scene-frame{height:570px}.simulator-sidebar{display:grid;grid-template-columns:1fr 1fr}.sector-picker{grid-column:1}.status-block{grid-column:2;grid-row:1 / span 2;border-left:1px solid #86dae12a}.legend-block{grid-column:1}.sim-disclaimer{grid-column:1 / -1;padding:20px 23px;margin:0;border-top:1px solid #86dae12a}}
 @media(max-width:650px){.simulator-section{padding:75px 0 90px}.sim-heading{align-items:start;gap:20px}.sim-concept-badge{font-size:8px;line-height:1.4;text-align:right}.simulator-intro{display:block;margin-bottom:27px}.simulator-intro h2{font-size:clamp(39px,10vw,56px)}.simulator-intro p{font-size:14px}.sim-sector-count{margin-top:24px;display:inline-flex}.sim-sector-count strong{font-size:36px}.scene-frame{height:420px}.scene-topline{font-size:8px;left:12px;right:12px;top:13px}.scene-bottomline{font-size:7px;left:12px;bottom:12px;right:12px;line-height:1.45}.sim-controls{display:block;padding:15px}.sim-controls>span{display:block;margin-bottom:10px}.sim-control-buttons{gap:6px}.sim-control-buttons button{width:36px;height:36px}.sim-control-buttons .reset-camera{margin-left:auto}.simulator-sidebar{display:block}.sidebar-block{padding:22px}.status-block{border-left:0}.sim-disclaimer{padding:20px 22px}}
 @media(max-width:390px){.sim-control-buttons .reset-camera span{display:none}.sim-control-buttons .reset-camera{width:36px;justify-content:center;padding:0}.scene-frame{height:375px}}

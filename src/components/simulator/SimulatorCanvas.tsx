@@ -1,8 +1,10 @@
 import { OrbitControls } from '@react-three/drei'
-import { Canvas, useThree } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useRef, Suspense } from 'react'
 import { OrthographicCamera, Vector3 } from 'three'
 import CityScene from './CityScene'
+import Drone from './Drone'
+import { DRONE_PLANS, type MissionStore } from './mission'
 import type { Selection } from './scenario'
 
 export type CameraCommand = { type: 'left' | 'right' | 'zoom-in' | 'zoom-out'; key: number }
@@ -45,12 +47,19 @@ function CameraControls({ resetKey, command }: { resetKey: number; command: Came
     rotateSpeed={.65} zoomSpeed={.8} />
 }
 
-export default function SimulatorCanvas({ selectedId, onSelect, resetKey, command }: { selectedId: string; onSelect: (item: Selection) => void; resetKey: number; command: CameraCommand }) {
+function MissionTicker({ store }: { store: MissionStore }) {
+  useFrame((_, delta) => store.advance(delta))
+  return null
+}
+
+export default function SimulatorCanvas({ selectedId, selectedDroneId, onSelect, onSelectDrone, recognizedIds, store, resetKey, command }: { selectedId: string; selectedDroneId: string | null; onSelect: (item: Selection) => void; onSelectDrone: (id: string) => void; recognizedIds: string[]; store: MissionStore; resetKey: number; command: CameraCommand }) {
   return <Canvas className="sim-canvas" orthographic camera={{ position: [34,32,37], zoom: 20, near: .1, far: 180 }}
     shadows="basic" dpr={[1,1.6]} gl={{ antialias: true, powerPreference: 'high-performance' }}
     fallback={<div className="sim-webgl-fallback">La visualización 3D requiere un navegador con WebGL.</div>}>
     <Suspense fallback={null}>
-      <CityScene selectedId={selectedId} onSelect={onSelect} />
+      <CityScene selectedId={selectedId} onSelect={onSelect} recognizedIds={recognizedIds} />
+      {DRONE_PLANS.map((plan, index) => <Drone key={plan.id} index={index} store={store} selected={selectedDroneId === plan.id} onSelect={onSelectDrone} />)}
+      <MissionTicker store={store} />
       <CameraControls resetKey={resetKey} command={command} />
     </Suspense>
   </Canvas>

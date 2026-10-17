@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react'
+import { memo, useLayoutEffect, useRef } from 'react'
 import { Object3D, type InstancedMesh } from 'three'
 import Building from './Building'
 import LabelSprite from './LabelSprite'
@@ -71,18 +71,20 @@ function RiverAndFloods() {
   </group>
 }
 
-function SectorMarker({ sector, selected, onSelect }: { sector: typeof sectors[number]; selected: boolean; onSelect: (item: Selection) => void }) {
+function SectorMarker({ sector, selected, recognized, onSelect }: { sector: typeof sectors[number]; selected: boolean; recognized: boolean; onSelect: (item: Selection) => void }) {
+  const color = selected ? '#f89a6f' : recognized ? '#71e9ed' : '#a5b9bf'
   return <group position={[sector.x,0,sector.z]} onClick={(event) => { event.stopPropagation(); onSelect(sector) }}
     onPointerOver={(event) => { event.stopPropagation(); document.body.style.cursor = 'pointer' }}
     onPointerOut={() => { document.body.style.cursor = '' }}>
-    <mesh position={[0,.2,0]} rotation={[-Math.PI/2,0,0]}><torusGeometry args={[.48,.065,8,28]} /><meshBasicMaterial color={selected ? '#f89a6f' : '#71e9ed'} /></mesh>
+    {recognized && <mesh position={[0,.13,0]} rotation={[-Math.PI/2,0,0]}><circleGeometry args={[1.85,32]} /><meshBasicMaterial color="#55dce4" transparent opacity={.16} depthWrite={false} /></mesh>}
+    <mesh position={[0,.2,0]} rotation={[-Math.PI/2,0,0]}><torusGeometry args={[.48,.065,8,28]} /><meshBasicMaterial color={color} /></mesh>
     <mesh position={[0,.45,0]}><cylinderGeometry args={[.05,.05,.9,8]} /><meshStandardMaterial color="#bde7e6" /></mesh>
-    <mesh position={[0,.97,0]}><octahedronGeometry args={[.23,0]} /><meshStandardMaterial color={selected ? '#ff986e' : '#72eaf1'} emissive={selected ? '#ff986e' : '#3bbecb'} emissiveIntensity={.7} /></mesh>
-    <LabelSprite text={sector.name.toUpperCase()} position={[0,1.68,0]} accent={selected ? '#ffab81' : '#70e9ea'} width={3.7} />
+    <mesh position={[0,.97,0]}><octahedronGeometry args={[.23,0]} /><meshStandardMaterial color={color} emissive={color} emissiveIntensity={recognized ? .7 : .25} /></mesh>
+    <LabelSprite text={sector.name.toUpperCase()} position={[0,1.68,0]} accent={color} width={3.7} />
   </group>
 }
 
-export default function CityScene({ selectedId, onSelect }: { selectedId: string; onSelect: (item: Selection) => void }) {
+function CityScene({ selectedId, onSelect, recognizedIds }: { selectedId: string; onSelect: (item: Selection) => void; recognizedIds: string[] }) {
   return <>
     <color attach="background" args={['#112f3d']} />
     <ambientLight intensity={1.7} />
@@ -94,8 +96,10 @@ export default function CityScene({ selectedId, onSelect }: { selectedId: string
     <RiverAndFloods />
     <Trees />
     {buildings.map((building) => <Building key={building.id} data={building} selected={selectedId===building.id} onSelect={onSelect} />)}
-    {sectors.map((sector) => <SectorMarker key={sector.id} sector={sector} selected={selectedId===sector.id} onSelect={onSelect} />)}
+    {sectors.map((sector) => <SectorMarker key={sector.id} sector={sector} selected={selectedId===sector.id} recognized={recognizedIds.includes(sector.id)} onSelect={onSelect} />)}
     <mesh position={[-16.5,.015,-3]}><boxGeometry args={[2.2,.035,2.2]} /><meshStandardMaterial color="#6b9e91" /></mesh>
     <mesh position={[16.5,.015,4]}><boxGeometry args={[2.2,.035,2.2]} /><meshStandardMaterial color="#6b9e91" /></mesh>
   </>
 }
+
+export default memo(CityScene)
