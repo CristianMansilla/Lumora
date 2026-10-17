@@ -1,5 +1,8 @@
-import { useEffect, useMemo } from 'react'
-import { CanvasTexture, LinearFilter } from 'three'
+import { useFrame, useThree } from '@react-three/fiber'
+import { useEffect, useMemo, useRef } from 'react'
+import { CanvasTexture, LinearFilter, type Sprite } from 'three'
+import { cameraProfile } from './cameraProfile'
+import { isPriorityLabel, useLabelVisibility } from './labelVisibility'
 
 export default function LabelSprite({ text, position, accent = '#70e9ea', width = 2.9 }: {
   text: string
@@ -7,6 +10,14 @@ export default function LabelSprite({ text, position, accent = '#70e9ea', width 
   accent?: string
   width?: number
 }) {
+  const sprite = useRef<Sprite>(null)
+  const { size } = useThree()
+  const labels = useLabelVisibility()
+  const { portrait, overviewZoom } = cameraProfile(size.width, size.height)
+  const priority = labels ? isPriorityLabel(text, labels) : true
+  useFrame(({ camera }) => {
+    if (sprite.current) sprite.current.visible = !portrait || priority || (!labels?.presentationActive && camera.zoom > overviewZoom * 1.7 && text.startsWith('SECTOR '))
+  })
   const texture = useMemo(() => {
     const canvas = document.createElement('canvas')
     canvas.width = 512
@@ -33,7 +44,7 @@ export default function LabelSprite({ text, position, accent = '#70e9ea', width 
 
   useEffect(() => () => texture.dispose(), [texture])
 
-  return <sprite position={position} scale={[width, width * .273, 1]} renderOrder={10}>
+  return <sprite ref={sprite} position={position} scale={[width, width * .273, 1]} renderOrder={10} visible={!portrait || priority}>
     <spriteMaterial map={texture} transparent depthWrite={false} depthTest={false} />
   </sprite>
 }

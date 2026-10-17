@@ -123,7 +123,7 @@ export default function SimulatorSection() {
           <div><span>CONCIENCIA COLECTIVA</span><strong>{mission.collective.receivedCount} reportes recibidos</strong><small>{mission.collective.unknownCount}/5 sectores sin información</small></div>
         </div>
         <div className="simulator-main">
-          <div className="scene-frame">
+          <div className={'scene-frame' + (presentationActive && presentation.scene === 'closing' ? ' scene-frame--closing' : '')}>
             {sceneReady ? <Suspense fallback={<div className="scene-loading">Preparando ciudad 3D…</div>}><SimulatorCanvas selectedId={selected.kind === 'Sector' || selected.kind === 'Edificio' ? selected.id : ''} selectedDroneId={selected.kind === 'Dron' ? selected.id : null} selectedNetworkId={selected.kind === 'Baliza' || selected.kind === 'Mensajero' ? selected.id : null} selectedIscatId={selected.kind === 'ISCAT' ? selected.id : null} selectedBase={selected.kind === 'Base móvil'} onSelect={selectScene} onSelectDrone={selectDrone} onSelectNetwork={selectNetwork} onSelectIscat={selectIscat} onSelectBase={selectBase} recognizedIds={mission.recognizedIds} network={mission.network} store={store} presentation={presentationController} presentationActive={presentationActive} resetKey={resetKey} command={command} /></Suspense> : <div className="scene-loading">Preparando ciudad 3D…</div>}
             <div className="scene-topline" aria-hidden="true"><span>LUMORA / ESCENARIO 01</span><span>VISTA ORBITAL</span></div>
             <button type="button" className="scene-selection" disabled={presentationActive} onClick={() => setMode('selection')} title="Ver detalles de selección">SELECCIONADO · {selected.name} <span>VER DETALLES →</span></button>

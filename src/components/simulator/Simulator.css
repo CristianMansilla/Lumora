@@ -162,3 +162,28 @@
 @media(max-width:800px){.presentation-active .scene-frame{height:660px}.presentation-top{padding:19px}.presentation-bottom{padding:16px 19px 20px;display:block}.presentation-story{max-width:100%}.presentation-actions{max-width:none;justify-content:flex-start;margin-top:9px}.presentation-actions button{flex:1}}
 @media(max-width:650px){.presentation-launch{width:100%;justify-content:center;font-size:11px}.presentation-launch span{display:none}.presentation-active .scene-frame{height:650px}.presentation-top{display:block;padding:15px}.presentation-top>div:first-child{max-width:100%}.presentation-top h3{font-size:24px;margin:6px 0}.presentation-progress{width:100%;padding:7px 9px;margin-top:10px;text-align:left}.presentation-progress>div{margin-top:5px}.presentation-bottom{padding:12px}.presentation-story{padding:10px 12px}.presentation-story>p{font-size:16px}.presentation-summary span{font-size:8px}.presentation-actions button{font-size:9px;padding:9px 7px}}
 @media(max-width:650px){.presentation-hud--closing .presentation-story>p{font-size:14px}.presentation-hud--closing .presentation-outcome{font-size:10px}.presentation-hud--closing .presentation-outcome small{font-size:9px}}
+
+/* Portrait presentation keeps the city visible between compact, readable HUD bands. */
+@media(max-width:650px){
+  .presentation-active .scene-frame{height:clamp(600px,calc(100dvh - 92px),780px)}
+  .presentation-active .scene-frame--closing{height:clamp(680px,calc(100dvh - 92px),780px)}
+  .presentation-active .scene-frame{scroll-margin-top:64px}
+  .presentation-hud{background:linear-gradient(180deg,#051b29e8,transparent 20%,transparent 67%,#061c2be8)}
+  .presentation-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 10px;padding:11px 12px;align-items:start}
+  .presentation-top>div:first-child{min-width:0}
+  .presentation-eyebrow{font-size:8px;letter-spacing:.06em}
+  .presentation-top h3{font-size:clamp(18px,5vw,23px);margin:4px 0;line-height:1.05}
+  .presentation-top small{font-size:7px;letter-spacing:.04em}
+  .presentation-progress{width:78px;margin:0;padding:5px 6px;font-size:9px}
+  .presentation-progress>div{margin-top:4px}
+  .presentation-bottom{padding:8px 10px 11px}
+  .presentation-story{padding:9px 11px}
+  .presentation-story>p{font-size:clamp(12px,3.55vw,15px);line-height:1.28}
+  .presentation-story>small{font-size:9px;margin-top:5px}
+  .presentation-actions{gap:6px;margin-top:6px}
+  .presentation-actions button{min-height:36px;padding:7px 8px;font-size:10px;touch-action:manipulation}
+  .presentation-decision{margin-top:6px;padding-top:6px;gap:3px;font-size:9px}
+  .presentation-outcome{margin-top:7px;padding-top:7px;gap:3px}
+  .presentation-summary{gap:4px;margin-top:7px}
+  .presentation-summary span{padding:5px;font-size:8px;line-height:1.2}
+}
