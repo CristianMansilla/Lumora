@@ -46,14 +46,14 @@ export default function SimulatorSection() {
         <span className="sim-concept-badge"><span /> SIMULACIÓN CONCEPTUAL</span>
       </div>
       <div className="simulator-intro reveal">
-        <div><span className="sim-overline">ESCENARIO FICTICIO / CIUDAD 3D</span><h2>Simulación de <em>emergencia.</em></h2><p>Iniciá el reconocimiento HUGIN y seguí el recorrido de los reportes por la red MUNIN.</p></div>
+        <div><span className="sim-overline">ESCENARIO FICTICIO / CIUDAD 3D</span><h2>Simulación de <em>emergencia.</em></h2><p>Explorá LUMORA: iniciá el reconocimiento HUGIN y seguí el recorrido de los reportes por la red MUNIN.</p></div>
         <div className="sim-sector-count"><strong>05</strong><span>SECTORES<br />EXPLORABLES</span></div>
       </div>
       <div className="simulator-shell reveal">
         <div className="simulator-main">
           <div className="scene-frame">
             {sceneReady ? <Suspense fallback={<div className="scene-loading">Preparando ciudad 3D…</div>}><SimulatorCanvas selectedId={selected.kind === 'Sector' || selected.kind === 'Edificio' ? selected.id : ''} selectedDroneId={selected.kind === 'Dron' ? selected.id : null} selectedNetworkId={selected.kind === 'Baliza' || selected.kind === 'Mensajero' ? selected.id : null} onSelect={setSelected} onSelectDrone={selectDrone} onSelectNetwork={selectNetwork} recognizedIds={mission.recognizedIds} network={mission.network} store={store} resetKey={resetKey} command={command} /></Suspense> : <div className="scene-loading">Preparando ciudad 3D…</div>}
-            <div className="scene-topline" aria-hidden="true"><span>H&M / ESCENARIO 01</span><span>VISTA ORBITAL</span></div>
+            <div className="scene-topline" aria-hidden="true"><span>LUMORA / ESCENARIO 01</span><span>VISTA ORBITAL</span></div>
             <div className="scene-bottomline" aria-hidden="true">ARRASTRÁ PARA ROTAR · RUEDA O PELLIZCO PARA ACERCAR</div>
           </div>
           <div className="mission-controls" aria-label="Controles de reconocimiento">

@@ -1,6 +1,13 @@
-# HUGIN & MUNIN
+# LUMORA
 
-Primera versión del sitio de presentación para el Rally Latinoamericano de Innovación 2026, desafío 09.
+LUMORA es una propuesta conceptual de plataforma integral para coordinar información y decisiones ante emergencias. Integra cuatro subsistemas:
+
+- **HUGIN:** drones de reconocimiento y relevamiento del territorio.
+- **MUNIN:** red descentralizada de comunicaciones y transporte de reportes.
+- **ISCAT:** cápsulas con sensores para identificar posibles señales de auxilio que requieren verificación.
+- **Conciencia Colectiva:** integración y análisis de información para apoyar las decisiones de los equipos responsables.
+
+El sitio presenta la propuesta para el Rally Latinoamericano de Innovación 2026, desafío 09. Incluye una ciudad 3D y una simulación conceptual e interactiva de las misiones HUGIN y MUNIN. Los escenarios y reportes son ficticios; la solución no ha sido validada en campo.
 
 ## Ejecutar
 
@@ -16,4 +23,8 @@ npm run build
 npm run preview
 ```
 
-La propuesta y el mapa son conceptuales. El componente `src/components/SimulatorSection.tsx` reserva la sección para una futura simulación con React Three Fiber; todavía no incluye un simulador funcional.
+Para revisar el código:
+
+```bash
+npm run lint
+```
