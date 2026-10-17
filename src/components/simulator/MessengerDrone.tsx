@@ -32,10 +32,10 @@ function MessengerDrone({ store, task, selected, onSelect }: { store: MissionSto
   const left = useRef<Group>(null)
   const right = useRef<Group>(null)
   useFrame(() => {
-    const pose = messengerPose(task, store.getTime())
+    const pose = messengerPose(task, store.getClock())
     if (body.current) { body.current.position.copy(pose.position); body.current.rotation.y = pose.yaw }
-    if (left.current) left.current.rotation.y = store.getTime()*25
-    if (right.current) right.current.rotation.y = -store.getTime()*25
+    if (left.current) left.current.rotation.y = store.getClock()*25
+    if (right.current) right.current.rotation.y = -store.getClock()*25
   })
   return <group ref={body} position={base.toArray()} onClick={(event) => { event.stopPropagation(); onSelect() }}
     onPointerOver={(event) => { event.stopPropagation(); document.body.style.cursor = 'pointer' }}

@@ -14,7 +14,7 @@ function MeshLinks({ network, store }: { network: NetworkSnapshot; store: Missio
       if (!child) return
       const from = nodePosition(transfer.from)
       const to = nodePosition(transfer.to)
-      const progress = Math.min(1, Math.max(0, (store.getTime() - transfer.start) / (transfer.end - transfer.start)))
+      const progress = Math.min(1, Math.max(0, (store.getClock() - transfer.start) / (transfer.end - transfer.start)))
       child.position.set(from.x + (to.x - from.x) * progress, 2.45, from.z + (to.z - from.z) * progress)
     })
   })

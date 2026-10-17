@@ -8,6 +8,9 @@ import Beacon from './Beacon'
 import MeshLinks from './MeshLinks'
 import MessengerDrone from './MessengerDrone'
 import MobileCommandBase from './MobileCommandBase'
+import IscatCapsule from './IscatCapsule'
+import IscatDeploymentDrone from './IscatDeploymentDrone'
+import { ISCAT_PLANS } from './iscat'
 import { MOBILE_BASE_POSITION } from './mobileBaseConfig'
 import { DRONE_PLANS, type MissionStore } from './mission'
 import { BEACONS, type NetworkSnapshot } from './network'
@@ -78,13 +81,15 @@ function MissionTicker({ store }: { store: MissionStore }) {
   return null
 }
 
-export default function SimulatorCanvas({ selectedId, selectedDroneId, selectedNetworkId, selectedBase, onSelect, onSelectDrone, onSelectNetwork, onSelectBase, recognizedIds, network, store, resetKey, command }: { selectedId: string; selectedDroneId: string | null; selectedNetworkId: string | null; selectedBase: boolean; onSelect: (item: Selection) => void; onSelectDrone: (id: string) => void; onSelectNetwork: (id: string) => void; onSelectBase: () => void; recognizedIds: string[]; network: NetworkSnapshot; store: MissionStore; resetKey: number; command: CameraCommand }) {
+export default function SimulatorCanvas({ selectedId, selectedDroneId, selectedNetworkId, selectedIscatId, selectedBase, onSelect, onSelectDrone, onSelectNetwork, onSelectIscat, onSelectBase, recognizedIds, network, store, resetKey, command }: { selectedId: string; selectedDroneId: string | null; selectedNetworkId: string | null; selectedIscatId: string | null; selectedBase: boolean; onSelect: (item: Selection) => void; onSelectDrone: (id: string) => void; onSelectNetwork: (id: string) => void; onSelectIscat: (id: string) => void; onSelectBase: () => void; recognizedIds: string[]; network: NetworkSnapshot; store: MissionStore; resetKey: number; command: CameraCommand }) {
   return <Canvas className="sim-canvas" orthographic camera={{ position: [34,32,37], zoom: 20, near: .1, far: 180 }}
     shadows="basic" dpr={[1,1.6]} gl={{ antialias: true, powerPreference: 'high-performance' }}
     fallback={<div className="sim-webgl-fallback">La visualización 3D requiere un navegador con WebGL.</div>}>
     <Suspense fallback={null}>
       <CityScene selectedId={selectedId} onSelect={onSelect} recognizedIds={recognizedIds} />
       <MobileCommandBase store={store} selected={selectedBase} onSelect={onSelectBase} />
+      <IscatDeploymentDrone store={store} />
+      {ISCAT_PLANS.map((plan, index) => <IscatCapsule key={plan.id} index={index} store={store} selected={selectedIscatId === plan.id} onSelect={onSelectIscat} />)}
       <MeshLinks network={network} store={store} />
       {BEACONS.map((beacon, index) => <Beacon key={beacon.id} data={beacon} status={network.beacons[index].status} selected={selectedNetworkId === beacon.id} onSelect={onSelectNetwork} />)}
       {DRONE_PLANS.map((plan, index) => <Drone key={plan.id} index={index} store={store} selected={selectedDroneId === plan.id} onSelect={onSelectDrone} />)}

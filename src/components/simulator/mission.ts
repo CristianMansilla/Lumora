@@ -1,6 +1,7 @@
 import { CatmullRomCurve3, Vector3 } from 'three'
 import { sectors } from './scenario'
 import { createNetworkModel, type NetworkSnapshot } from './network'
+import { createIscatModel, type IscatSnapshot } from './iscat'
 
 export type MissionPhase = 'idle' | 'running' | 'paused' | 'complete'
 export type DroneStatus = 'En base' | 'Despegando' | 'En ruta' | 'Inspeccionando' | 'Regresando' | 'Aterrizando' | 'Finalizado'
@@ -119,17 +120,20 @@ export type MissionSnapshot = {
   droneStatuses: DroneStatus[]
   events: MissionEvent[]
   network: NetworkSnapshot
+  iscat: IscatSnapshot
 }
 
 export type MissionStore = ReturnType<typeof createMissionStore>
 
 export function createMissionStore() {
   let elapsed = 0
+  let clock = 0
   let phase: MissionPhase = 'idle'
   let lastPublish = 0
   let events: MissionEvent[] = []
   let recognizedIds: string[] = []
   let network = createNetworkModel()
+  let iscat = createIscatModel()
   let huginFinished = false
   const listeners = new Set<() => void>()
   const derive = (): MissionSnapshot => {
@@ -137,13 +141,14 @@ export function createMissionStore() {
     if (nextRecognized.join('|') !== recognizedIds.join('|')) recognizedIds = nextRecognized
     const poses = DRONE_PLANS.map((_, index) => flightAt(index, Math.min(elapsed, MISSION_DURATION)))
     const inspecting = poses.map((pose) => pose.scanningSectorId).filter((id): id is string => Boolean(id))
+    const networkSnapshot = network.snapshot()
     return {
       phase, elapsed, percent: Math.min(100, Math.round(elapsed / MISSION_DURATION * 100)),
       activeCount: phase === 'idle' ? 0 : poses.filter((pose) => pose.status !== 'En base' && pose.status !== 'Finalizado').length,
       recognizedIds,
       currentSector: inspecting.length ? inspecting.map((id) => sectors.find((sector) => sector.id === id)?.name ?? id).join(' · ') : 'Ninguno',
       droneStatuses: poses.map((pose) => phase === 'idle' ? 'En base' : pose.status),
-      events, network: network.snapshot(),
+      events, network: networkSnapshot, iscat: iscat.snapshot(clock, networkSnapshot.reports),
     }
   }
   let snapshot = derive()
@@ -152,31 +157,43 @@ export function createMissionStore() {
     subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } },
     getSnapshot: () => snapshot,
     getTime: () => elapsed,
+    getClock: () => clock,
     advance: (delta: number) => {
-      if (phase !== 'running') return
+      if (iscat.isPaused() || (phase !== 'running' && !iscat.isActive())) return
+      const step = Math.min(delta, .5)
+      clock += step
       const previous = elapsed
-      elapsed += Math.min(delta, .5)
-      const reached = milestones.filter((entry) => entry.time > previous && entry.time <= elapsed)
-      if (reached.length) events = [...events, ...reached]
-      for (const entry of recognitionTimes.filter((item) => item.time > previous && item.time <= elapsed)) network.onRecognized(entry.sectorId, entry.time)
-      if (elapsed >= MISSION_DURATION && !huginFinished) {
-        huginFinished = true
-        events = [...events, { time: MISSION_DURATION, text: 'Reconocimiento finalizado. Los tres drones regresaron a base.' }]
+      const previousPhase = phase
+      let reached: MissionEvent[] = []
+      if (phase === 'running') {
+        elapsed += step
+        reached = milestones.filter((entry) => entry.time > previous && entry.time <= elapsed)
+        if (reached.length) events = [...events, ...reached]
+        for (const entry of recognitionTimes.filter((item) => item.time > previous && item.time <= elapsed)) network.onRecognized(entry.sectorId, clock)
+        if (elapsed >= MISSION_DURATION && !huginFinished) {
+          huginFinished = true
+          events = [...events, { time: MISSION_DURATION, text: 'Reconocimiento finalizado. Los tres drones regresaron a base.' }]
+        }
       }
-      network.advance(elapsed)
+      iscat.advance(clock, network.addIscatReport)
+      network.advance(clock)
       if (huginFinished && network.isSettled()) phase = 'complete'
-      if (elapsed - lastPublish >= .15 || reached.length || phase === 'complete') { lastPublish = elapsed; publish() }
+      if (clock - lastPublish >= .15 || reached.length || phase !== previousPhase) { lastPublish = clock; publish() }
     },
     start: () => {
-      elapsed = 0; lastPublish = 0; phase = 'running'; huginFinished = false; network = createNetworkModel()
+      elapsed = 0; lastPublish = clock; phase = 'running'; huginFinished = false
+      if (!iscat.isActive()) { network = createNetworkModel(); clock = 0; lastPublish = 0 }
+      iscat.resume()
       events = [{ time: 0, text: 'Reconocimiento iniciado. HUGIN-01 despegó del centro de operaciones.' }]
       publish()
     },
-    pause: () => { if (phase === 'running') { phase = 'paused'; events = [...events, { time: elapsed, text: 'Misión pausada.' }]; publish() } },
-    resume: () => { if (phase === 'paused') { phase = 'running'; events = [...events, { time: elapsed, text: 'Misión reanudada.' }]; publish() } },
-    startNetwork: () => { network.start(elapsed); if (network.snapshot().started) { if (phase === 'complete') phase = 'running'; publish() } },
-    failLink: () => { network.fail(elapsed, recognizedIds.includes('west')); if (phase === 'complete' && !network.isSettled()) phase = 'running'; publish() },
-    restoreLink: () => { network.restore(elapsed); publish() },
-    reset: () => { elapsed = 0; lastPublish = 0; phase = 'idle'; huginFinished = false; events = []; recognizedIds = []; network = createNetworkModel(); publish() },
+    pause: () => { if (phase === 'running' || iscat.isActive() && !iscat.isPaused()) { if (phase === 'running') phase = 'paused'; iscat.pause(); events = [...events, { time: elapsed, text: 'Misión pausada.' }]; publish() } },
+    resume: () => { if (phase === 'paused' || iscat.isPaused()) { if (phase === 'paused') phase = 'running'; iscat.resume(); events = [...events, { time: elapsed, text: 'Misión reanudada.' }]; publish() } },
+    deployIscat: () => { if (iscat.deploy(clock)) publish() },
+    startIscatMonitoring: () => { if (iscat.monitor(clock)) publish() },
+    startNetwork: () => { network.start(clock); if (network.snapshot().started) { if (phase === 'complete') phase = 'running'; publish() } },
+    failLink: () => { network.fail(clock, recognizedIds.includes('west')); if (phase === 'complete' && !network.isSettled()) phase = 'running'; publish() },
+    restoreLink: () => { network.restore(clock); publish() },
+    reset: () => { elapsed = 0; clock = 0; lastPublish = 0; phase = 'idle'; huginFinished = false; events = []; recognizedIds = []; network = createNetworkModel(); iscat = createIscatModel(); publish() },
   }
 }

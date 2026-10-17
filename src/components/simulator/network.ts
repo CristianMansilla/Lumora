@@ -1,4 +1,5 @@
 import { sectors } from './scenario'
+import type { IscatPlan } from './iscat'
 
 export type BeaconStatus = 'Inactiva' | 'Disponible' | 'Conectada' | 'Aislada'
 export type ReportStatus = 'Almacenado' | 'En tránsito' | 'Recibido'
@@ -7,7 +8,7 @@ export type NodeId = 'hub' | 'munin-01' | 'munin-02' | 'munin-03' | 'munin-04' |
 export type BeaconPlan = { id: Exclude<NodeId, 'hub' | 'messenger'>; name: string; sectorId: string; x: number; z: number }
 export type LinkPlan = { id: string; from: NodeId; to: NodeId }
 export type Transfer = { reportId: string; from: NodeId; to: NodeId; start: number; end: number }
-export type Report = { id: string; sectorId: string; observation: string; priority: string; status: ReportStatus; location: NodeId; history: string[] }
+export type Report = { id: string; origin: string; sectorId: string; observationType: string; observation: string; requiresVerification: boolean; priority: string; status: ReportStatus; location: NodeId; history: string[] }
 export type MessengerTask = { reportIds: string[]; startedAt: number; phase: MessengerStatus }
 export type NetworkSnapshot = {
   started: boolean
@@ -82,7 +83,8 @@ export function createNetworkModel() {
     const id = 'RPT-' + sectorId.toUpperCase() + '-' + String(update ? ++westUpdates : 1).padStart(2, '0')
     if (reports.some((report) => report.id === id)) return
     reports = [...reports, {
-      id, sectorId, observation: update ? 'Actualización local ficticia tras la caída del enlace.' : sector.observations,
+      id, origin: 'HUGIN', sectorId, observationType: 'Relevamiento visual', requiresVerification: true,
+      observation: update ? 'Actualización local ficticia tras la caída del enlace.' : sector.observations,
       priority: priorityFor(sectorId), status: 'Almacenado', location: beacon.id, hop: null,
       history: [`${time.toFixed(1)} s · HUGIN generó un reporte simulado de ${sector.name}.`, `${time.toFixed(1)} s · Almacenado en ${beacon.name}.`],
     }]
@@ -152,6 +154,19 @@ export function createNetworkModel() {
   }
   return {
     onRecognized: addReport,
+    addIscatReport: (plan: IscatPlan, time: number) => {
+      const id = `RPT-${plan.id}`
+      if (reports.some((report) => report.id === id)) return
+      const beacon = beaconForSector(plan.sectorId)
+      reports = [...reports, {
+        id, origin: plan.id, sectorId: plan.sectorId, observationType: plan.observationType,
+        observation: plan.observation, requiresVerification: plan.requiresVerification,
+        priority: 'Sin priorizar', status: 'Almacenado', location: beacon.id, hop: null,
+        history: [`${time.toFixed(1)} s · ${plan.id} generó una lectura ficticia.`, `${time.toFixed(1)} s · Almacenado en ${beacon.name}.`],
+      }]
+      log(time, `${id} disponible únicamente en ${beacon.name}.`)
+      if (started) { scheduleMessenger(time); advanceReports(time) }
+    },
     start: (time: number) => { if (!started && reports.length) { started = true; log(time, 'Red MUNIN activada; se evalúan las rutas disponibles.'); scheduleMessenger(time); advanceReports(time) } },
     fail: (time: number, westRecognized: boolean) => {
       if (failed) return
@@ -180,7 +195,7 @@ export function createNetworkModel() {
         connectedSectorIds: started ? connectedBeacons.map((beacon) => beacon.sectorId) : [],
         isolatedSectorIds: started ? BEACONS.filter((beacon) => !connectedIds.has(beacon.id)).map((beacon) => beacon.sectorId) : [],
         linksAvailable: started ? LINKS.length - Number(failed) : 0,
-        reports: reports.map((report) => ({ id: report.id, sectorId: report.sectorId, observation: report.observation, priority: report.priority, status: report.status, location: report.location, history: [...report.history] })),
+        reports: reports.map((report) => ({ id: report.id, origin: report.origin, sectorId: report.sectorId, observationType: report.observationType, observation: report.observation, requiresVerification: report.requiresVerification, priority: report.priority, status: report.status, location: report.location, history: [...report.history] })),
         transfers: reports.filter((report) => report.hop).map((report) => ({ reportId: report.id, from: report.hop!.from, to: report.hop!.to, start: report.hop!.start, end: report.hop!.end })),
         messenger: messenger ? { ...messenger, reportIds: [...messenger.reportIds] } : null,
         messengerStatus,
