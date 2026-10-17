@@ -2,7 +2,9 @@ import { useFrame } from '@react-three/fiber'
 import { memo, useRef } from 'react'
 import { DoubleSide, type Group, type Mesh, type MeshBasicMaterial } from 'three'
 import LabelSprite from './LabelSprite'
-import { DRONE_PLANS, flightAt, type MissionStore } from './mission'
+import { DRONE_PLANS, type MissionStore } from './mission'
+import { mobileBaseFlightAt } from './mobileBaseFlight'
+import { MOBILE_BASE_DRONE_HEIGHT, MOBILE_BASE_PAD_X, MOBILE_BASE_PAD_Z, MOBILE_BASE_POSITION } from './mobileBaseConfig'
 
 type Props = {
   index: number
@@ -26,7 +28,7 @@ function Drone({ index, store, selected, onSelect }: Props) {
 
   useFrame(() => {
     const time = store.getTime()
-    const pose = flightAt(index, time)
+    const pose = mobileBaseFlightAt(index, time)
     if (drone.current) {
       drone.current.position.copy(pose.position)
       drone.current.rotation.y = pose.yaw
@@ -53,7 +55,7 @@ function Drone({ index, store, selected, onSelect }: Props) {
     { x: -.72, z: -.72, ref: rotorA }, { x: .72, z: -.72, ref: rotorB },
     { x: -.72, z: .72, ref: rotorC }, { x: .72, z: .72, ref: rotorD },
   ]
-  return <group ref={drone} position={[plan.launch[0], .92, plan.launch[1]]}
+  return <group ref={drone} position={[MOBILE_BASE_POSITION[0] + MOBILE_BASE_PAD_X[index], MOBILE_BASE_DRONE_HEIGHT, MOBILE_BASE_POSITION[2] + MOBILE_BASE_PAD_Z]}
     onClick={(event) => { event.stopPropagation(); onSelect(plan.id) }}
     onPointerOver={(event) => { event.stopPropagation(); document.body.style.cursor = 'pointer' }}
     onPointerOut={() => { document.body.style.cursor = '' }}>

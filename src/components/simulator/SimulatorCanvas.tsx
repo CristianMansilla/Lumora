@@ -7,11 +7,13 @@ import Drone from './Drone'
 import Beacon from './Beacon'
 import MeshLinks from './MeshLinks'
 import MessengerDrone from './MessengerDrone'
+import MobileCommandBase from './MobileCommandBase'
+import { MOBILE_BASE_POSITION } from './mobileBaseConfig'
 import { DRONE_PLANS, type MissionStore } from './mission'
 import { BEACONS, type NetworkSnapshot } from './network'
 import type { Selection } from './scenario'
 
-export type CameraCommand = { type: 'left' | 'right' | 'zoom-in' | 'zoom-out'; key: number }
+export type CameraCommand = { type: 'left' | 'right' | 'zoom-in' | 'zoom-out' | 'base' | 'home'; key: number }
 
 function CameraControls({ resetKey, command }: { resetKey: number; command: CameraCommand }) {
   const controls = useRef<React.ComponentRef<typeof OrbitControls>>(null)
@@ -22,7 +24,17 @@ function CameraControls({ resetKey, command }: { resetKey: number; command: Came
   useEffect(() => {
     const camera = controls.current?.object
     if (!(camera instanceof OrthographicCamera)) return
-    if (!previous.current.initialized || previous.current.resetKey !== resetKey || previous.current.fitZoom !== fitZoom) {
+    const focusBase = () => {
+      const target = new Vector3(...MOBILE_BASE_POSITION)
+      target.y = .4
+      camera.position.copy(target).add(new Vector3(34, 32, 37))
+      camera.zoom = fitZoom * 2.1
+      camera.lookAt(target)
+      controls.current?.target.copy(target)
+      camera.updateProjectionMatrix()
+    }
+    const resetRequested = previous.current.resetKey !== resetKey
+    if (!previous.current.initialized || resetRequested || previous.current.fitZoom !== fitZoom) {
       camera.position.set(34, 32, 37)
       camera.zoom = fitZoom
       camera.near = .1
@@ -30,9 +42,19 @@ function CameraControls({ resetKey, command }: { resetKey: number; command: Came
       camera.lookAt(0, 0, 0)
       camera.updateProjectionMatrix()
       controls.current?.target.set(0, 0, 0)
+      if (!resetRequested && command.type === 'base' && command.key > 0) focusBase()
     } else if (command.key !== previous.current.commandKey) {
-      if (command.type === 'left' || command.type === 'right') {
-        camera.position.applyAxisAngle(new Vector3(0, 1, 0), command.type === 'left' ? -.3 : .3)
+      if (command.type === 'base') {
+        focusBase()
+      } else if (command.type === 'home') {
+        camera.position.set(34, 32, 37)
+        camera.zoom = fitZoom
+        camera.lookAt(0, 0, 0)
+        camera.updateProjectionMatrix()
+        controls.current?.target.set(0, 0, 0)
+      } else if (command.type === 'left' || command.type === 'right') {
+        const target = controls.current?.target ?? new Vector3()
+        camera.position.sub(target).applyAxisAngle(new Vector3(0, 1, 0), command.type === 'left' ? -.3 : .3).add(target)
       } else {
         const factor = command.type === 'zoom-in' ? 1.22 : 1 / 1.22
         camera.zoom = Math.min(fitZoom * 2.45, Math.max(fitZoom * .72, camera.zoom * factor))
@@ -56,12 +78,13 @@ function MissionTicker({ store }: { store: MissionStore }) {
   return null
 }
 
-export default function SimulatorCanvas({ selectedId, selectedDroneId, selectedNetworkId, onSelect, onSelectDrone, onSelectNetwork, recognizedIds, network, store, resetKey, command }: { selectedId: string; selectedDroneId: string | null; selectedNetworkId: string | null; onSelect: (item: Selection) => void; onSelectDrone: (id: string) => void; onSelectNetwork: (id: string) => void; recognizedIds: string[]; network: NetworkSnapshot; store: MissionStore; resetKey: number; command: CameraCommand }) {
+export default function SimulatorCanvas({ selectedId, selectedDroneId, selectedNetworkId, selectedBase, onSelect, onSelectDrone, onSelectNetwork, onSelectBase, recognizedIds, network, store, resetKey, command }: { selectedId: string; selectedDroneId: string | null; selectedNetworkId: string | null; selectedBase: boolean; onSelect: (item: Selection) => void; onSelectDrone: (id: string) => void; onSelectNetwork: (id: string) => void; onSelectBase: () => void; recognizedIds: string[]; network: NetworkSnapshot; store: MissionStore; resetKey: number; command: CameraCommand }) {
   return <Canvas className="sim-canvas" orthographic camera={{ position: [34,32,37], zoom: 20, near: .1, far: 180 }}
     shadows="basic" dpr={[1,1.6]} gl={{ antialias: true, powerPreference: 'high-performance' }}
     fallback={<div className="sim-webgl-fallback">La visualización 3D requiere un navegador con WebGL.</div>}>
     <Suspense fallback={null}>
       <CityScene selectedId={selectedId} onSelect={onSelect} recognizedIds={recognizedIds} />
+      <MobileCommandBase store={store} selected={selectedBase} onSelect={onSelectBase} />
       <MeshLinks network={network} store={store} />
       {BEACONS.map((beacon, index) => <Beacon key={beacon.id} data={beacon} status={network.beacons[index].status} selected={selectedNetworkId === beacon.id} onSelect={onSelectNetwork} />)}
       {DRONE_PLANS.map((plan, index) => <Drone key={plan.id} index={index} store={store} selected={selectedDroneId === plan.id} onSelect={onSelectDrone} />)}

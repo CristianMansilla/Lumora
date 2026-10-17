@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { ChevronLeft, ChevronRight, Info, Pause, Play, RotateCcw, ZoomIn, ZoomOut } from 'lucide-react'
 import type { CameraCommand } from './simulator/SimulatorCanvas'
-import { createMissionStore, DRONE_PLANS } from './simulator/mission'
+import { createMissionStore, DRONE_PLANS, MISSION_DURATION } from './simulator/mission'
 import NetworkPanel, { NetworkControls } from './simulator/NetworkPanel'
 import { BEACONS } from './simulator/network'
 import { sectors, type Selection } from './simulator/scenario'
@@ -10,18 +10,23 @@ import './simulator/Simulator.css'
 const SimulatorCanvas = lazy(() => import('./simulator/SimulatorCanvas'))
 type DroneSelection = { kind: 'Dron'; id: string; name: string }
 type NetworkSelection = { kind: 'Baliza' | 'Mensajero'; id: string; name: string }
+type BaseSelection = { kind: 'Base móvil'; id: 'mobile-base'; name: 'Base móvil LUMORA' }
 
 export default function SimulatorSection() {
   const sectionRef = useRef<HTMLElement>(null)
   const [sceneReady, setSceneReady] = useState(false)
   const [store] = useState(createMissionStore)
   const mission = useSyncExternalStore(store.subscribe, store.getSnapshot)
-  const [selected, setSelected] = useState<Selection | DroneSelection | NetworkSelection>(sectors[4])
+  const [selected, setSelected] = useState<Selection | DroneSelection | NetworkSelection | BaseSelection>(sectors[4])
   const [resetKey, setResetKey] = useState(0)
   const [command, setCommand] = useState<CameraCommand>({ type: 'left', key: 0 })
   const issue = (type: CameraCommand['type']) => setCommand((current) => ({ type, key: current.key + 1 }))
   const selectDrone = useCallback((id: string) => setSelected({ kind: 'Dron', id, name: id }), [])
   const selectNetwork = useCallback((id: string) => setSelected({ kind: id === 'messenger' ? 'Mensajero' : 'Baliza', id, name: id === 'messenger' ? 'MUNIN-M1' : BEACONS.find((beacon) => beacon.id === id)?.name ?? id }), [])
+  const selectBase = useCallback(() => {
+    setSelected({ kind: 'Base móvil', id: 'mobile-base', name: 'Base móvil LUMORA' })
+    setCommand((current) => ({ type: 'base', key: current.key + 1 }))
+  }, [])
   const restart = () => { store.reset(); setSelected(sectors[4]) }
 
   useEffect(() => {
@@ -38,6 +43,7 @@ export default function SimulatorSection() {
   const selectedBeacon = selected.kind === 'Baliza' ? BEACONS.find((beacon) => beacon.id === selected.id) : undefined
   const droneIndex = selectedDrone ? DRONE_PLANS.indexOf(selectedDrone) : -1
   const unverified = selected.kind === 'Sector' && !mission.recognizedIds.includes(selected.id)
+  const baseStatus = mission.phase === 'idle' ? 'Lista para despliegue' : mission.phase === 'paused' ? 'Despliegue pausado' : mission.elapsed >= MISSION_DURATION ? 'Drones replegados' : 'Desplegando HUGIN'
 
   return <section className="simulator-section" id="simulador" ref={sectionRef}>
     <div className="container">
@@ -46,13 +52,13 @@ export default function SimulatorSection() {
         <span className="sim-concept-badge"><span /> SIMULACIÓN CONCEPTUAL</span>
       </div>
       <div className="simulator-intro reveal">
-        <div><span className="sim-overline">ESCENARIO FICTICIO / CIUDAD 3D</span><h2>Simulación de <em>emergencia.</em></h2><p>Explorá LUMORA: iniciá el reconocimiento HUGIN y seguí el recorrido de los reportes por la red MUNIN.</p></div>
+        <div><span className="sim-overline">ESCENARIO FICTICIO / CIUDAD 3D</span><h2>Simulación de <em>emergencia.</em></h2><p>Explorá LUMORA: desplegá HUGIN desde una base móvil conceptual y seguí los reportes por la red MUNIN.</p></div>
         <div className="sim-sector-count"><strong>05</strong><span>SECTORES<br />EXPLORABLES</span></div>
       </div>
       <div className="simulator-shell reveal">
         <div className="simulator-main">
           <div className="scene-frame">
-            {sceneReady ? <Suspense fallback={<div className="scene-loading">Preparando ciudad 3D…</div>}><SimulatorCanvas selectedId={selected.kind === 'Sector' || selected.kind === 'Edificio' ? selected.id : ''} selectedDroneId={selected.kind === 'Dron' ? selected.id : null} selectedNetworkId={selected.kind === 'Baliza' || selected.kind === 'Mensajero' ? selected.id : null} onSelect={setSelected} onSelectDrone={selectDrone} onSelectNetwork={selectNetwork} recognizedIds={mission.recognizedIds} network={mission.network} store={store} resetKey={resetKey} command={command} /></Suspense> : <div className="scene-loading">Preparando ciudad 3D…</div>}
+            {sceneReady ? <Suspense fallback={<div className="scene-loading">Preparando ciudad 3D…</div>}><SimulatorCanvas selectedId={selected.kind === 'Sector' || selected.kind === 'Edificio' ? selected.id : ''} selectedDroneId={selected.kind === 'Dron' ? selected.id : null} selectedNetworkId={selected.kind === 'Baliza' || selected.kind === 'Mensajero' ? selected.id : null} selectedBase={selected.kind === 'Base móvil'} onSelect={setSelected} onSelectDrone={selectDrone} onSelectNetwork={selectNetwork} onSelectBase={selectBase} recognizedIds={mission.recognizedIds} network={mission.network} store={store} resetKey={resetKey} command={command} /></Suspense> : <div className="scene-loading">Preparando ciudad 3D…</div>}
             <div className="scene-topline" aria-hidden="true"><span>LUMORA / ESCENARIO 01</span><span>VISTA ORBITAL</span></div>
             <div className="scene-bottomline" aria-hidden="true">ARRASTRÁ PARA ROTAR · RUEDA O PELLIZCO PARA ACERCAR</div>
           </div>
@@ -73,7 +79,7 @@ export default function SimulatorSection() {
               <button type="button" onClick={() => issue('right')} aria-label="Rotar a la derecha" title="Rotar a la derecha"><ChevronRight size={20} /></button>
               <button type="button" onClick={() => issue('zoom-in')} aria-label="Acercar" title="Acercar"><ZoomIn size={19} /></button>
               <button type="button" onClick={() => issue('zoom-out')} aria-label="Alejar" title="Alejar"><ZoomOut size={19} /></button>
-              <button type="button" className="reset-camera" onClick={() => setResetKey((key) => key + 1)}><RotateCcw size={17} /><span>REINICIAR VISTA</span></button>
+              <button type="button" className="reset-camera" onClick={() => { setResetKey((key) => key + 1); issue('home') }}><RotateCcw size={17} /><span>REINICIAR VISTA</span></button>
             </div>
           </div>
         </div>
@@ -88,14 +94,15 @@ export default function SimulatorSection() {
             <span className="sidebar-label">SECTORES <b>{String(mission.recognizedIds.length).padStart(2, '0')} / 05</b></span>
             <div className="sector-buttons">{sectors.map((sector) => <button type="button" key={sector.id} className={(selected.id === sector.id ? 'active ' : '') + (mission.recognizedIds.includes(sector.id) ? 'recognized' : '')} onClick={() => setSelected(sector)}>{sector.name.replace('Sector ', '')}</button>)}</div>
           </div>
+          <div className="sidebar-block drone-picker"><span className="sidebar-label">DESPLIEGUE <b>CONFIGURACIÓN FUTURA</b></span><div className="drone-buttons"><button type="button" className={selected.kind === 'Base móvil' ? 'active' : ''} onClick={selectBase}><span className="drone-dot" style={{ background: '#f4c95c', color: '#f4c95c' }} /><strong>BASE MÓVIL LUMORA</strong><span>{baseStatus}</span></button></div></div>
           <div className="sidebar-block drone-picker"><span className="sidebar-label">FLOTA AÉREA <b>03 UNIDADES</b></span><div className="drone-buttons">{DRONE_PLANS.map((plan, index) => <button type="button" key={plan.id} className={selected.id === plan.id ? 'active' : ''} onClick={() => selectDrone(plan.id)}><span className="drone-dot" style={{ background: plan.color }} /><strong>{plan.id}</strong><span>{mission.droneStatuses[index]}</span></button>)}</div></div>
           <div className="sidebar-block status-block" aria-live="polite">
             <div className="sidebar-label">ELEMENTO SELECCIONADO <span className="selection-kind">{selected.kind.toUpperCase()}</span></div>
             <h3>{selected.name}</h3>
             <div className="status-rows">
-              {selectedDrone ? <><div><span>Estado simulado</span><strong>{mission.droneStatuses[droneIndex]}</strong></div><div><span>Unidad</span><strong>Reconocimiento aéreo</strong></div><div><span>Base</span><strong>Centro de operaciones</strong></div></> : selectedBeacon ? <><div><span>Estado</span><strong>{mission.network.beacons[BEACONS.indexOf(selectedBeacon)].status}</strong></div><div><span>Sector</span><strong>{sectors.find((sector) => sector.id === selectedBeacon.sectorId)?.name}</strong></div><div><span>Reportes locales</span><strong>{mission.network.reports.filter((report) => report.location === selectedBeacon.id).length}</strong></div></> : selected.kind === 'Mensajero' ? <><div><span>Estado</span><strong>{mission.network.messengerStatus}</strong></div><div><span>Carga digital</span><strong>{mission.network.reports.filter((report) => report.location === 'messenger').length} reportes</strong></div><div><span>Función</span><strong>Almacenar y transportar</strong></div></> : selected.kind === 'Sector' || selected.kind === 'Edificio' ? <><div><span>Estado simulado</span><strong>{unverified ? 'Sin verificar' : selected.status}</strong></div><div><span>Daño estimado</span><strong className={!unverified ? 'damage-' + selected.damage.toLowerCase() : ''}>{!unverified && <i />}{unverified ? 'Pendiente' : selected.damage}</strong></div><div><span>Comunicaciones</span><strong>{unverified ? 'Sin verificar' : selected.communications}</strong></div></> : null}
+              {selectedDrone ? <><div><span>Estado simulado</span><strong>{mission.droneStatuses[droneIndex]}</strong></div><div><span>Unidad</span><strong>Reconocimiento aéreo</strong></div><div><span>Base</span><strong>Base móvil LUMORA</strong></div></> : selectedBeacon ? <><div><span>Estado</span><strong>{mission.network.beacons[BEACONS.indexOf(selectedBeacon)].status}</strong></div><div><span>Sector</span><strong>{sectors.find((sector) => sector.id === selectedBeacon.sectorId)?.name}</strong></div><div><span>Reportes locales</span><strong>{mission.network.reports.filter((report) => report.location === selectedBeacon.id).length}</strong></div></> : selected.kind === 'Mensajero' ? <><div><span>Estado</span><strong>{mission.network.messengerStatus}</strong></div><div><span>Carga digital</span><strong>{mission.network.reports.filter((report) => report.location === 'messenger').length} reportes</strong></div><div><span>Función</span><strong>Almacenar y transportar</strong></div></> : selected.kind === 'Base móvil' ? <><div><span>Estado conceptual</span><strong>{baseStatus}</strong></div><div><span>Capacidad ilustrada</span><strong>Despliegue HUGIN</strong></div><div><span>Unidad</span><strong>Centro móvil de coordinación</strong></div></> : selected.kind === 'Sector' || selected.kind === 'Edificio' ? <><div><span>Estado simulado</span><strong>{unverified ? 'Sin verificar' : selected.status}</strong></div><div><span>Daño estimado</span><strong className={!unverified ? 'damage-' + selected.damage.toLowerCase() : ''}>{!unverified && <i />}{unverified ? 'Pendiente' : selected.damage}</strong></div><div><span>Comunicaciones</span><strong>{unverified ? 'Sin verificar' : selected.communications}</strong></div></> : null}
             </div>
-            <div className="status-observation"><span>{selectedDrone || selected.kind === 'Mensajero' ? 'MISIÓN' : 'OBSERVACIONES'}</span><p>{selectedDrone ? selectedDrone.mission : selectedBeacon ? 'Nodo local de la red mesh conceptual. Sus enlaces y reportes dependen del estado de la misión.' : selected.kind === 'Mensajero' ? 'Recoge datos junto a un nodo aislado, los lleva a un nodo conectado y regresa a base.' : unverified ? 'El reconocimiento visual simulado aún no llegó a este sector.' : selected.kind === 'Sector' || selected.kind === 'Edificio' ? selected.observations : ''}</p></div>
+            <div className="status-observation"><span>{selectedDrone || selected.kind === 'Mensajero' ? 'MISIÓN' : 'OBSERVACIONES'}</span><p>{selectedDrone ? selectedDrone.mission : selectedBeacon ? 'Nodo local de la red mesh conceptual. Sus enlaces y reportes dependen del estado de la misión.' : selected.kind === 'Mensajero' ? 'Recoge datos junto a un nodo aislado, los lleva a un nodo conectado y regresa a base.' : selected.kind === 'Base móvil' ? 'Posible configuración futura para desplegar HUGIN y apoyar la coordinación. El vehículo, sus compuertas y su rampa son una representación conceptual; no se ha fabricado ni validado.' : unverified ? 'El reconocimiento visual simulado aún no llegó a este sector.' : selected.kind === 'Sector' || selected.kind === 'Edificio' ? selected.observations : ''}</p></div>
           </div>
           <div className="sidebar-block mission-log"><span className="sidebar-label">REGISTRO DE EVENTOS <b>{mission.events.length}</b></span><div className="mission-events" role="log" aria-label="Eventos de la misión">{mission.events.length ? [...mission.events].reverse().map((event, index) => <div key={`${event.time}-${index}`}><time>{String(Math.floor(event.time / 60)).padStart(2, '0')}:{String(Math.floor(event.time % 60)).padStart(2, '0')}</time><span>{event.text}</span></div>) : <p>La misión aún no comenzó.</p>}</div></div>
           <NetworkPanel network={mission.network} selectedId={selected.id} onSelect={selectNetwork} />
