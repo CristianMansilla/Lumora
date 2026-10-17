@@ -2,6 +2,7 @@ import { CatmullRomCurve3, Vector3 } from 'three'
 import { sectors } from './scenario'
 import { createNetworkModel, type NetworkSnapshot } from './network'
 import { createIscatModel, type IscatSnapshot } from './iscat'
+import { deriveCollective, type CollectiveSnapshot } from './collective'
 
 export type MissionPhase = 'idle' | 'running' | 'paused' | 'complete'
 export type DroneStatus = 'En base' | 'Despegando' | 'En ruta' | 'Inspeccionando' | 'Regresando' | 'Aterrizando' | 'Finalizado'
@@ -113,6 +114,7 @@ const milestones: MissionEvent[] = [
 export type MissionSnapshot = {
   phase: MissionPhase
   elapsed: number
+  clock: number
   percent: number
   activeCount: number
   recognizedIds: string[]
@@ -121,6 +123,7 @@ export type MissionSnapshot = {
   events: MissionEvent[]
   network: NetworkSnapshot
   iscat: IscatSnapshot
+  collective: CollectiveSnapshot
 }
 
 export type MissionStore = ReturnType<typeof createMissionStore>
@@ -143,12 +146,12 @@ export function createMissionStore() {
     const inspecting = poses.map((pose) => pose.scanningSectorId).filter((id): id is string => Boolean(id))
     const networkSnapshot = network.snapshot()
     return {
-      phase, elapsed, percent: Math.min(100, Math.round(elapsed / MISSION_DURATION * 100)),
+      phase, elapsed, clock, percent: Math.min(100, Math.round(elapsed / MISSION_DURATION * 100)),
       activeCount: phase === 'idle' ? 0 : poses.filter((pose) => pose.status !== 'En base' && pose.status !== 'Finalizado').length,
       recognizedIds,
       currentSector: inspecting.length ? inspecting.map((id) => sectors.find((sector) => sector.id === id)?.name ?? id).join(' · ') : 'Ninguno',
       droneStatuses: poses.map((pose) => phase === 'idle' ? 'En base' : pose.status),
-      events, network: networkSnapshot, iscat: iscat.snapshot(clock, networkSnapshot.reports),
+      events, network: networkSnapshot, iscat: iscat.snapshot(clock, networkSnapshot.reports), collective: deriveCollective(networkSnapshot),
     }
   }
   let snapshot = derive()

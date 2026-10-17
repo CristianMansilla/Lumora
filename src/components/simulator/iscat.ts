@@ -7,14 +7,15 @@ export type IscatPlan = {
   position: [number, number]
   observationType: string
   observation: string
+  signal: 'normal' | 'possibleHelp' | 'environmentalRisk'
   requiresVerification: boolean
   delay: number
 }
 
 export const ISCAT_PLANS: IscatPlan[] = [
-  { id: 'ISCAT-01', sectorId: 'north', position: [-5, -12.7], observationType: 'Condiciones ambientales', observation: 'Lectura ficticia sin anomalías relevantes.', requiresVerification: false, delay: 2 },
-  { id: 'ISCAT-02', sectorId: 'west', position: [-17.2, 4.6], observationType: 'Posible patrón acústico', observation: 'Golpes repetitivos simulados; requiere verificación humana en terreno.', requiresVerification: true, delay: 5 },
-  { id: 'ISCAT-03', sectorId: 'south', position: [-13.3, 13.65], observationType: 'Anomalía ambiental', observation: 'Anomalía ambiental simulada próxima al área inundada; requiere inspección.', requiresVerification: true, delay: 8 },
+  { id: 'ISCAT-01', sectorId: 'north', position: [-5, -12.7], observationType: 'Condiciones ambientales', observation: 'Lectura ficticia sin anomalías relevantes.', signal: 'normal', requiresVerification: false, delay: 2 },
+  { id: 'ISCAT-02', sectorId: 'west', position: [-17.2, 4.6], observationType: 'Posible patrón acústico', observation: 'Golpes repetitivos simulados; requiere verificación humana en terreno.', signal: 'possibleHelp', requiresVerification: true, delay: 5 },
+  { id: 'ISCAT-03', sectorId: 'south', position: [-13.3, 13.65], observationType: 'Anomalía ambiental', observation: 'Anomalía ambiental simulada próxima al área inundada; requiere inspección.', signal: 'environmentalRisk', requiresVerification: true, delay: 8 },
 ]
 
 export const ISCAT_SORTIE_DURATION = 8

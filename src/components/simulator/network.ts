@@ -1,4 +1,4 @@
-import { sectors } from './scenario'
+import { sectors, type Damage } from './scenario'
 import type { IscatPlan } from './iscat'
 
 export type BeaconStatus = 'Inactiva' | 'Disponible' | 'Conectada' | 'Aislada'
@@ -8,7 +8,8 @@ export type NodeId = 'hub' | 'munin-01' | 'munin-02' | 'munin-03' | 'munin-04' |
 export type BeaconPlan = { id: Exclude<NodeId, 'hub' | 'messenger'>; name: string; sectorId: string; x: number; z: number }
 export type LinkPlan = { id: string; from: NodeId; to: NodeId }
 export type Transfer = { reportId: string; from: NodeId; to: NodeId; start: number; end: number }
-export type Report = { id: string; origin: string; sectorId: string; observationType: string; observation: string; requiresVerification: boolean; priority: string; status: ReportStatus; location: NodeId; history: string[] }
+export type ReportSignals = { damage?: Damage; possibleHelp?: boolean; environmentalRisk?: boolean; accessLimited?: boolean }
+export type Report = { id: string; origin: string; sectorId: string; observationType: string; observation: string; signals: ReportSignals; createdAt: number; receivedAt: number | null; requiresVerification: boolean; priority: string; status: ReportStatus; location: NodeId; history: string[] }
 export type MessengerTask = { reportIds: string[]; startedAt: number; phase: MessengerStatus }
 export type NetworkSnapshot = {
   started: boolean
@@ -84,6 +85,8 @@ export function createNetworkModel() {
     if (reports.some((report) => report.id === id)) return
     reports = [...reports, {
       id, origin: 'HUGIN', sectorId, observationType: 'Relevamiento visual', requiresVerification: true,
+      signals: { damage: sector.damage, environmentalRisk: sector.status === 'Zona inundada', accessLimited: sector.status === 'Acceso limitado' },
+      createdAt: time, receivedAt: null,
       observation: update ? 'Actualización local ficticia tras la caída del enlace.' : sector.observations,
       priority: priorityFor(sectorId), status: 'Almacenado', location: beacon.id, hop: null,
       history: [`${time.toFixed(1)} s · HUGIN generó un reporte simulado de ${sector.name}.`, `${time.toFixed(1)} s · Almacenado en ${beacon.name}.`],
@@ -134,6 +137,7 @@ export function createNetworkModel() {
         report.hop = null
         if (destination === 'hub') {
           report.status = 'Recibido'
+          report.receivedAt = time
           log(time, `${report.id} recibido en el centro de operaciones.`)
         } else {
           report.status = 'Almacenado'
@@ -160,6 +164,8 @@ export function createNetworkModel() {
       const beacon = beaconForSector(plan.sectorId)
       reports = [...reports, {
         id, origin: plan.id, sectorId: plan.sectorId, observationType: plan.observationType,
+        signals: { possibleHelp: plan.signal === 'possibleHelp', environmentalRisk: plan.signal === 'environmentalRisk' },
+        createdAt: time, receivedAt: null,
         observation: plan.observation, requiresVerification: plan.requiresVerification,
         priority: 'Sin priorizar', status: 'Almacenado', location: beacon.id, hop: null,
         history: [`${time.toFixed(1)} s · ${plan.id} generó una lectura ficticia.`, `${time.toFixed(1)} s · Almacenado en ${beacon.name}.`],
@@ -195,7 +201,7 @@ export function createNetworkModel() {
         connectedSectorIds: started ? connectedBeacons.map((beacon) => beacon.sectorId) : [],
         isolatedSectorIds: started ? BEACONS.filter((beacon) => !connectedIds.has(beacon.id)).map((beacon) => beacon.sectorId) : [],
         linksAvailable: started ? LINKS.length - Number(failed) : 0,
-        reports: reports.map((report) => ({ id: report.id, origin: report.origin, sectorId: report.sectorId, observationType: report.observationType, observation: report.observation, requiresVerification: report.requiresVerification, priority: report.priority, status: report.status, location: report.location, history: [...report.history] })),
+        reports: reports.map((report) => ({ id: report.id, origin: report.origin, sectorId: report.sectorId, observationType: report.observationType, observation: report.observation, signals: { ...report.signals }, createdAt: report.createdAt, receivedAt: report.receivedAt, requiresVerification: report.requiresVerification, priority: report.priority, status: report.status, location: report.location, history: [...report.history] })),
         transfers: reports.filter((report) => report.hop).map((report) => ({ reportId: report.id, from: report.hop!.from, to: report.hop!.to, start: report.hop!.start, end: report.hop!.end })),
         messenger: messenger ? { ...messenger, reportIds: [...messenger.reportIds] } : null,
         messengerStatus,
