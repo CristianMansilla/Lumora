@@ -1,12 +1,12 @@
 import { Link2Off, Play, Radio, RotateCcw } from 'lucide-react'
 import { BEACONS, type NetworkSnapshot } from './network'
 
-export function NetworkControls({ network, onStart, onFail, onRestore }: { network: NetworkSnapshot; onStart: () => void; onFail: () => void; onRestore: () => void }) {
+export function NetworkControls({ network, onStart, onFail, onRestore, disabled = false }: { network: NetworkSnapshot; onStart: () => void; onFail: () => void; onRestore: () => void; disabled?: boolean }) {
   return <div className="network-controls" aria-label="Controles de la red MUNIN">
     <div className="mission-control-title"><span>RED MUNIN</span><strong>{network.started ? network.failed ? 'Enlace Oeste interrumpido' : 'Red descentralizada activa' : 'A la espera de reportes'}</strong></div>
     <div className="mission-control-buttons">
-      {!network.started && <button type="button" className="network-primary" disabled={!network.reports.length} onClick={onStart}><Play size={15} /> Iniciar misión de red</button>}
-      {!network.failed ? <button type="button" disabled={!network.started} onClick={onFail}><Link2Off size={15} /> Simular caída de enlace</button> : <button type="button" onClick={onRestore}><RotateCcw size={15} /> Restaurar conexión</button>}
+      {!network.started && <button type="button" className="network-primary" disabled={disabled || !network.reports.length} onClick={onStart}><Play size={15} /> Iniciar misión de red</button>}
+      {!network.failed ? <button type="button" disabled={disabled || !network.started} onClick={onFail}><Link2Off size={15} /> Simular caída de enlace</button> : <button type="button" disabled={disabled} onClick={onRestore}><RotateCcw size={15} /> Restaurar conexión</button>}
     </div>
   </div>
 }

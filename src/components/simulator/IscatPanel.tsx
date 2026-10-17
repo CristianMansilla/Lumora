@@ -2,13 +2,13 @@ import { Radio, Send } from 'lucide-react'
 import { ISCAT_DEPLOYMENT_DURATION, ISCAT_PLANS, type IscatSnapshot } from './iscat'
 import type { NetworkSnapshot } from './network'
 
-export function IscatControls({ iscat, clock, onDeploy, onMonitor }: { iscat: IscatSnapshot; clock: number; onDeploy: () => void; onMonitor: () => void }) {
+export function IscatControls({ iscat, clock, onDeploy, onMonitor, disabled = false }: { iscat: IscatSnapshot; clock: number; onDeploy: () => void; onMonitor: () => void; disabled?: boolean }) {
   const deploying = iscat.deploymentStartedAt !== null && clock - iscat.deploymentStartedAt < ISCAT_DEPLOYMENT_DURATION
   return <div className="iscat-controls" aria-label="Controles ISCAT">
     <div className="mission-control-title"><span>ISCAT / FEROMONAS DIGITALES</span><strong>{iscat.monitoringStartedAt !== null ? 'Monitoreo conceptual activo' : deploying ? 'Despliegue en curso' : iscat.deployedCount === 3 ? 'Cápsulas listas para monitoreo' : 'Tres cápsulas en espera'}</strong></div>
     <div className="mission-control-buttons">
-      <button type="button" className="iscat-primary" disabled={iscat.deploymentStartedAt !== null} onClick={onDeploy}><Send size={15} /> Desplegar ISCAT</button>
-      <button type="button" disabled={iscat.deployedCount < 3 || deploying || iscat.monitoringStartedAt !== null} onClick={onMonitor}><Radio size={15} /> Iniciar monitoreo</button>
+      <button type="button" className="iscat-primary" disabled={disabled || iscat.deploymentStartedAt !== null} onClick={onDeploy}><Send size={15} /> Desplegar ISCAT</button>
+      <button type="button" disabled={disabled || iscat.deployedCount < 3 || deploying || iscat.monitoringStartedAt !== null} onClick={onMonitor}><Radio size={15} /> Iniciar monitoreo</button>
     </div>
   </div>
 }

@@ -5,6 +5,8 @@ import { createMissionStore, DRONE_PLANS, MISSION_DURATION } from './simulator/m
 import NetworkPanel, { NetworkControls } from './simulator/NetworkPanel'
 import IscatPanel, { IscatControls } from './simulator/IscatPanel'
 import CollectivePanel from './simulator/CollectivePanel'
+import PresentationHud from './simulator/PresentationHud'
+import { createPresentationController } from './simulator/presentation'
 import { ISCAT_PLANS } from './simulator/iscat'
 import { BEACONS } from './simulator/network'
 import { sectors, type Selection } from './simulator/scenario'
@@ -21,6 +23,9 @@ export default function SimulatorSection() {
   const [sceneReady, setSceneReady] = useState(false)
   const [store] = useState(createMissionStore)
   const mission = useSyncExternalStore(store.subscribe, store.getSnapshot)
+  const [presentationController] = useState(() => createPresentationController(store))
+  const presentation = useSyncExternalStore(presentationController.subscribe, presentationController.getSnapshot)
+  const presentationActive = presentation.status !== 'idle'
   const [selected, setSelected] = useState<Selection | DroneSelection | NetworkSelection | BaseSelection | IscatSelection>(sectors[4])
   const [resetKey, setResetKey] = useState(0)
   const [mode, setMode] = useState<'hugin' | 'munin' | 'iscat' | 'collective' | 'selection'>('hugin')
@@ -36,6 +41,14 @@ export default function SimulatorSection() {
     setCommand((current) => ({ type: 'base', key: current.key + 1 }))
   }, [])
   const restart = () => { store.reset(); setSelected(sectors[4]) }
+  const startPresentation = () => {
+    setSceneReady(true)
+    setSelected(sectors[4])
+    presentationController.start()
+    sectionRef.current?.querySelector('.scene-frame')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  const repeatPresentation = () => { setSelected(sectors[4]); presentationController.repeat() }
+  const exitPresentation = () => { presentationController.cancel(); setMode('hugin'); issue('home') }
 
   useEffect(() => {
     const section = sectionRef.current
@@ -46,6 +59,20 @@ export default function SimulatorSection() {
     observer.observe(section)
     return () => observer.disconnect()
   }, [])
+
+  useEffect(() => {
+    if (!presentationActive) return
+    const section = sectionRef.current
+    const observer = section && 'IntersectionObserver' in window ? new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) presentationController.cancel()
+    }) : null
+    if (section) observer?.observe(section)
+    const onHashChange = () => { if (window.location.hash && window.location.hash !== '#simulador') presentationController.cancel() }
+    window.addEventListener('hashchange', onHashChange)
+    return () => { observer?.disconnect(); window.removeEventListener('hashchange', onHashChange) }
+  }, [presentationActive, presentationController])
+
+  useEffect(() => () => { if (presentationController.getSnapshot().status !== 'idle') presentationController.cancel() }, [presentationController])
 
   const selectedDrone = selected.kind === 'Dron' ? DRONE_PLANS.find((plan) => plan.id === selected.id) : undefined
   const selectedBeacon = selected.kind === 'Baliza' ? BEACONS.find((beacon) => beacon.id === selected.id) : undefined
@@ -62,14 +89,14 @@ export default function SimulatorSection() {
     { id: 'selection', label: 'Detalles de selección' },
   ] as const
 
-  return <section className="simulator-section" id="simulador" ref={sectionRef}>
+  return <section className={'simulator-section' + (presentationActive ? ' presentation-active' : '')} id="simulador" ref={sectionRef}>
     <div className="container">
       <div className="sim-heading reveal">
         <div className="section-kicker"><span>05</span><i />SIMULADOR</div>
         <span className="sim-concept-badge"><span /> SIMULACIÓN CONCEPTUAL</span>
       </div>
       <div className="simulator-intro reveal">
-        <div><span className="sim-overline">ESCENARIO FICTICIO / CIUDAD 3D</span><h2>Simulación de <em>emergencia.</em></h2><p>Explorá LUMORA: desplegá HUGIN e ISCAT desde la base móvil conceptual y seguí los reportes por la red MUNIN.</p></div>
+        <div><span className="sim-overline">ESCENARIO FICTICIO / CIUDAD 3D</span><h2>Simulación de <em>emergencia.</em></h2><p>Explorá LUMORA: desplegá HUGIN e ISCAT desde la base móvil conceptual y seguí los reportes por la red MUNIN.</p>{presentation.status === 'idle' && <button type="button" className="presentation-launch" onClick={startPresentation}><Play size={17} /> Iniciar demostración <span>RECORRIDO GUIADO · ~2 MIN</span></button>}</div>
         <div className="sim-sector-count"><strong>05</strong><span>SECTORES<br />EXPLORABLES</span></div>
       </div>
       <div className="simulator-shell reveal">
@@ -81,36 +108,37 @@ export default function SimulatorSection() {
         </div>
         <div className="simulator-main">
           <div className="scene-frame">
-            {sceneReady ? <Suspense fallback={<div className="scene-loading">Preparando ciudad 3D…</div>}><SimulatorCanvas selectedId={selected.kind === 'Sector' || selected.kind === 'Edificio' ? selected.id : ''} selectedDroneId={selected.kind === 'Dron' ? selected.id : null} selectedNetworkId={selected.kind === 'Baliza' || selected.kind === 'Mensajero' ? selected.id : null} selectedIscatId={selected.kind === 'ISCAT' ? selected.id : null} selectedBase={selected.kind === 'Base móvil'} onSelect={selectScene} onSelectDrone={selectDrone} onSelectNetwork={selectNetwork} onSelectIscat={selectIscat} onSelectBase={selectBase} recognizedIds={mission.recognizedIds} network={mission.network} store={store} resetKey={resetKey} command={command} /></Suspense> : <div className="scene-loading">Preparando ciudad 3D…</div>}
+            {sceneReady ? <Suspense fallback={<div className="scene-loading">Preparando ciudad 3D…</div>}><SimulatorCanvas selectedId={selected.kind === 'Sector' || selected.kind === 'Edificio' ? selected.id : ''} selectedDroneId={selected.kind === 'Dron' ? selected.id : null} selectedNetworkId={selected.kind === 'Baliza' || selected.kind === 'Mensajero' ? selected.id : null} selectedIscatId={selected.kind === 'ISCAT' ? selected.id : null} selectedBase={selected.kind === 'Base móvil'} onSelect={selectScene} onSelectDrone={selectDrone} onSelectNetwork={selectNetwork} onSelectIscat={selectIscat} onSelectBase={selectBase} recognizedIds={mission.recognizedIds} network={mission.network} store={store} presentation={presentationController} presentationActive={presentationActive} resetKey={resetKey} command={command} /></Suspense> : <div className="scene-loading">Preparando ciudad 3D…</div>}
             <div className="scene-topline" aria-hidden="true"><span>LUMORA / ESCENARIO 01</span><span>VISTA ORBITAL</span></div>
-            <button type="button" className="scene-selection" onClick={() => setMode('selection')} title="Ver detalles de selección">SELECCIONADO · {selected.name} <span>VER DETALLES →</span></button>
+            <button type="button" className="scene-selection" disabled={presentationActive} onClick={() => setMode('selection')} title="Ver detalles de selección">SELECCIONADO · {selected.name} <span>VER DETALLES →</span></button>
             <div className="scene-bottomline" aria-hidden="true">ARRASTRÁ PARA ROTAR · RUEDA O PELLIZCO PARA ACERCAR</div>
+            {presentation.status !== 'idle' && <PresentationHud presentation={presentation} mission={mission} onPause={presentationController.pause} onResume={presentationController.resume} onCancel={exitPresentation} onRepeat={repeatPresentation} />}
           </div>
           <div className="mission-controls" aria-label="Controles de reconocimiento">
             <div className="mission-control-title"><span>OPERACIÓN HUGIN</span><strong>{mission.phase === 'idle' ? 'En espera' : mission.phase === 'paused' ? 'Simulación pausada' : mission.phase === 'complete' ? 'Misión finalizada' : mission.percent === 100 ? 'HUGIN completo · MUNIN en curso' : 'Reconocimiento en curso'}</strong></div>
             <div className="mission-control-buttons">
-              {(mission.phase === 'idle' || mission.phase === 'complete') && <button type="button" className="mission-primary" onClick={store.start}><Play size={16} /> Iniciar reconocimiento</button>}
-              {(mission.phase === 'running' || mission.iscat.deploymentStartedAt !== null && !mission.iscat.paused) && <button type="button" onClick={store.pause}><Pause size={16} /> Pausar</button>}
-              {(mission.phase === 'paused' || mission.iscat.paused) && <button type="button" className="mission-primary" onClick={store.resume}><Play size={16} /> Continuar</button>}
-              <button type="button" onClick={restart}><RotateCcw size={16} /> Reiniciar</button>
+              {(mission.phase === 'idle' || mission.phase === 'complete') && <button type="button" className="mission-primary" disabled={presentationActive} onClick={store.start}><Play size={16} /> Iniciar reconocimiento</button>}
+              {(mission.phase === 'running' || mission.iscat.deploymentStartedAt !== null && !mission.iscat.paused) && <button type="button" disabled={presentationActive} onClick={store.pause}><Pause size={16} /> Pausar</button>}
+              {(mission.phase === 'paused' || mission.iscat.paused) && <button type="button" className="mission-primary" disabled={presentationActive} onClick={store.resume}><Play size={16} /> Continuar</button>}
+              <button type="button" disabled={presentationActive} onClick={restart}><RotateCcw size={16} /> Reiniciar</button>
             </div>
           </div>
-          <NetworkControls network={mission.network} onStart={store.startNetwork} onFail={store.failLink} onRestore={store.restoreLink} />
-          <IscatControls iscat={mission.iscat} clock={store.getClock()} onDeploy={store.deployIscat} onMonitor={store.startIscatMonitoring} />
+          <NetworkControls network={mission.network} disabled={presentationActive} onStart={store.startNetwork} onFail={store.failLink} onRestore={store.restoreLink} />
+          <IscatControls iscat={mission.iscat} clock={store.getClock()} disabled={presentationActive} onDeploy={store.deployIscat} onMonitor={store.startIscatMonitoring} />
           <div className="sim-controls" aria-label="Controles de cámara">
             <span>CONTROL DE CÁMARA</span>
             <div className="sim-control-buttons">
-              <button type="button" onClick={() => issue('left')} aria-label="Rotar a la izquierda" title="Rotar a la izquierda"><ChevronLeft size={20} /></button>
-              <button type="button" onClick={() => issue('right')} aria-label="Rotar a la derecha" title="Rotar a la derecha"><ChevronRight size={20} /></button>
-              <button type="button" onClick={() => issue('zoom-in')} aria-label="Acercar" title="Acercar"><ZoomIn size={19} /></button>
-              <button type="button" onClick={() => issue('zoom-out')} aria-label="Alejar" title="Alejar"><ZoomOut size={19} /></button>
-              <button type="button" className="reset-camera" onClick={() => { setResetKey((key) => key + 1); issue('home') }}><RotateCcw size={17} /><span>REINICIAR VISTA</span></button>
+              <button type="button" disabled={presentationActive} onClick={() => issue('left')} aria-label="Rotar a la izquierda" title="Rotar a la izquierda"><ChevronLeft size={20} /></button>
+              <button type="button" disabled={presentationActive} onClick={() => issue('right')} aria-label="Rotar a la derecha" title="Rotar a la derecha"><ChevronRight size={20} /></button>
+              <button type="button" disabled={presentationActive} onClick={() => issue('zoom-in')} aria-label="Acercar" title="Acercar"><ZoomIn size={19} /></button>
+              <button type="button" disabled={presentationActive} onClick={() => issue('zoom-out')} aria-label="Alejar" title="Alejar"><ZoomOut size={19} /></button>
+              <button type="button" disabled={presentationActive} className="reset-camera" onClick={() => { setResetKey((key) => key + 1); issue('home') }}><RotateCcw size={17} /><span>REINICIAR VISTA</span></button>
             </div>
           </div>
         </div>
         <div className="simulator-sidebar" aria-label="Paneles del escenario">
           <div className="sim-mode-tabs" role="tablist" aria-label="Modo del simulador">
-            {tabs.map((tab) => <button key={tab.id} type="button" role="tab" aria-selected={mode === tab.id} className={mode === tab.id ? 'active' : ''} onClick={() => setMode(tab.id)}>{tab.label}</button>)}
+            {tabs.map((tab) => <button key={tab.id} type="button" role="tab" disabled={presentationActive} aria-selected={mode === tab.id} className={mode === tab.id ? 'active' : ''} onClick={() => setMode(tab.id)}>{tab.label}</button>)}
           </div>
           <div className="sim-tab-content" role="tabpanel">
           {mode === 'hugin' && <>
