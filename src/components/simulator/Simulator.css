@@ -129,7 +129,7 @@
 .scene-frame{scroll-margin-top:88px}
 .presentation-launch span{margin-left:16px;font-size:9px;letter-spacing:.08em;color:#315665}
 .presentation-active .simulator-sidebar,.presentation-active .simulator-main>.mission-controls,.presentation-active .simulator-main>.network-controls,.presentation-active .simulator-main>.iscat-controls,.presentation-active .simulator-main>.sim-controls{display:none}
-.presentation-active .scene-frame{height:clamp(620px,59vw,780px)}
+.presentation-active .scene-frame{height:min(clamp(620px,59vw,780px),calc(100dvh - 96px))}
 .presentation-active .sim-canvas{pointer-events:none}
 .presentation-active .scene-topline,.presentation-active .scene-bottomline,.presentation-active .scene-selection{display:none}
 .presentation-hud{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;background:linear-gradient(180deg,#051b29ad,transparent 24%,transparent 60%,#061c2bd9)}
@@ -148,6 +148,10 @@
 .presentation-decision{display:grid;gap:5px;margin-top:11px;border-top:1px solid #79dedc55;padding-top:11px;color:#d3e8e7;font-size:10px;line-height:1.4}
 .presentation-decision strong{color:#f7c180;font:700 9px "Courier New",monospace;letter-spacing:.08em}
 .presentation-decision small{color:#a8d7d8;line-height:1.4}
+.presentation-outcome{display:grid;gap:5px;margin-top:12px;padding-top:11px;border-top:1px solid #79dedc55;color:#e5f4f0;font-size:11px;line-height:1.35}
+.presentation-outcome strong{color:#f7c180;font:700 10px "Courier New",monospace;letter-spacing:.06em}
+.presentation-outcome b{color:#84e5e3}
+.presentation-outcome small{color:#b8dadd;font-size:10px;line-height:1.35}
 .presentation-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:12px}
 .presentation-summary span{background:#1b4d57;padding:7px;color:#daf0eb;font:700 10px "Courier New",monospace}
 .presentation-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;max-width:40%;pointer-events:auto}
@@ -157,3 +161,4 @@
 .presentation-blocked svg{flex:none}
 @media(max-width:800px){.presentation-active .scene-frame{height:660px}.presentation-top{padding:19px}.presentation-bottom{padding:16px 19px 20px;display:block}.presentation-story{max-width:100%}.presentation-actions{max-width:none;justify-content:flex-start;margin-top:9px}.presentation-actions button{flex:1}}
 @media(max-width:650px){.presentation-launch{width:100%;justify-content:center;font-size:11px}.presentation-launch span{display:none}.presentation-active .scene-frame{height:650px}.presentation-top{display:block;padding:15px}.presentation-top>div:first-child{max-width:100%}.presentation-top h3{font-size:24px;margin:6px 0}.presentation-progress{width:100%;padding:7px 9px;margin-top:10px;text-align:left}.presentation-progress>div{margin-top:5px}.presentation-bottom{padding:12px}.presentation-story{padding:10px 12px}.presentation-story>p{font-size:16px}.presentation-summary span{font-size:8px}.presentation-actions button{font-size:9px;padding:9px 7px}}
+@media(max-width:650px){.presentation-hud--closing .presentation-story>p{font-size:14px}.presentation-hud--closing .presentation-outcome{font-size:10px}.presentation-hud--closing .presentation-outcome small{font-size:9px}}

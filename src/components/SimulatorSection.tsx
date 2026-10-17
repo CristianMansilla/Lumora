@@ -45,7 +45,7 @@ export default function SimulatorSection() {
     setSceneReady(true)
     setSelected(sectors[4])
     presentationController.start()
-    sectionRef.current?.querySelector('.scene-frame')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (window.location.hash !== '#simulador') window.history.replaceState(window.history.state, '', '#simulador')
   }
   const repeatPresentation = () => { setSelected(sectors[4]); presentationController.repeat() }
   const exitPresentation = () => { presentationController.cancel(); setMode('hugin'); issue('home') }
@@ -62,12 +62,28 @@ export default function SimulatorSection() {
 
   useEffect(() => {
     if (!presentationActive) return
+    let nextFrame = 0
+    const firstFrame = requestAnimationFrame(() => {
+      nextFrame = requestAnimationFrame(() => sectionRef.current?.querySelector('.scene-frame')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    })
+    return () => { cancelAnimationFrame(firstFrame); cancelAnimationFrame(nextFrame) }
+  }, [presentationActive])
+
+  useEffect(() => {
+    if (!presentationActive) return
     const section = sectionRef.current
+    let wasVisible = false
+    const leavePresentation = () => {
+      presentationController.cancel()
+      setMode('hugin')
+      setCommand((current) => ({ type: 'home', key: current.key + 1 }))
+    }
     const observer = section && 'IntersectionObserver' in window ? new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) presentationController.cancel()
+      if (entry.isIntersecting) wasVisible = true
+      else if (wasVisible) leavePresentation()
     }) : null
     if (section) observer?.observe(section)
-    const onHashChange = () => { if (window.location.hash && window.location.hash !== '#simulador') presentationController.cancel() }
+    const onHashChange = () => { if (window.location.hash && window.location.hash !== '#simulador') leavePresentation() }
     window.addEventListener('hashchange', onHashChange)
     return () => { observer?.disconnect(); window.removeEventListener('hashchange', onHashChange) }
   }, [presentationActive, presentationController])

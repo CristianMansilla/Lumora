@@ -21,6 +21,9 @@ export default function PresentationHud({ presentation, mission, onPause, onResu
   const west = mission.collective.sectors.find((sector) => sector.sectorId === 'west')
   const suggested = mission.collective.resources.find((resource) => resource.sectorId === 'west')
   const recommendation = mission.collective.changes.find((change) => change.reportId === acoustic?.id)
+  const priority = mission.collective.sectors.find((sector) => sector.urgencyPoints !== null)
+  const priorityResource = mission.collective.resources.find((resource) => resource.sectorId === priority?.sectorId)
+  const priorityFactors = priority?.factors.filter((factor) => /^(Daño|ISCAT|Riesgo)/.test(factor)).slice(0, 2)
   const narrative = presentation.scene === 'emergency' ? 'Cuando ocurre una catástrofe, cada decisión cuenta.'
     : presentation.scene === 'hugin' ? `La base móvil conceptual despliega HUGIN. Reconocimiento real de la simulación: ${mission.recognizedIds.length}/5 sectores.`
       : presentation.scene === 'munin' ? mission.network.messengerStatus === 'Finalizado'
@@ -35,7 +38,7 @@ export default function PresentationHud({ presentation, mission, onPause, onResu
             : 'El indicio sigue fuera del centro: todavía no modifica la recomendación central.'
             : 'LUMORA — De información fragmentada a decisiones coordinadas.'
 
-  return <div className="presentation-hud" aria-live="polite">
+  return <div className={'presentation-hud' + (presentation.scene === 'closing' ? ' presentation-hud--closing' : '')} aria-live="polite">
     <div className="presentation-top">
       <div><span className="presentation-eyebrow">LUMORA / DEMOSTRACIÓN AUTOMÁTICA</span><h3>{titles[presentation.scene]}</h3><small>SIMULACIÓN CONCEPTUAL · ESCENARIO FICTICIO</small></div>
       <div className="presentation-progress"><span>{Math.floor(presentation.progress)}% · {Math.floor(presentation.elapsed)} s</span><div role="progressbar" aria-label="Progreso de la demostración" aria-valuenow={Math.floor(presentation.progress)} aria-valuemin={0} aria-valuemax={100}><i style={{ width: `${presentation.progress}%` }} /></div></div>
@@ -46,7 +49,17 @@ export default function PresentationHud({ presentation, mission, onPause, onResu
         {presentation.scene === 'munin' && <small>{mission.network.reports.filter((report) => report.status === 'Recibido').length} recibidos · {mission.network.reports.filter((report) => report.status !== 'Recibido').length} pendientes · {mission.network.isolatedSectorIds.length} sectores aislados</small>}
         {presentation.scene === 'iscat' && <small>{mission.iscat.monitoringCount}/3 monitoreando · {mission.iscat.indicationCount} posibles indicios · {mission.iscat.receivedAlerts} alertas recibidas</small>}
         {presentation.scene === 'collective' && <div className="presentation-decision"><strong>{receivedAcoustic ? 'RECOMENDACIÓN ACTUALIZADA' : 'INFORMACIÓN PENDIENTE'}</strong><span>Sector Oeste · {receivedAcoustic ? acoustic.observation : 'Indicio local aún no entregado al centro'}</span><span>Urgencia: {west?.urgency ?? 'No evaluable'} · Verificación: {west?.verification ?? 'Relevar'}</span>{receivedAcoustic && <><span>Recurso sugerido: {suggested?.id ?? 'Sin asignación'}. No se ejecuta ningún despacho.</span><small>{recommendation?.before} → {recommendation?.after}. {west?.factors.find((factor) => factor.includes('posible patrón de auxilio'))}</small></>}</div>}
-        {presentation.scene === 'closing' && <div className="presentation-summary"><span>{mission.recognizedIds.length}/5 sectores reconocidos</span><span>{mission.collective.receivedCount} reportes recibidos</span><span>{mission.iscat.deployedCount}/3 cápsulas desplegadas</span><span>{mission.collective.sectors.filter((sector) => sector.urgencyPoints !== null).length} recomendaciones con datos recibidos</span></div>}
+        {presentation.scene === 'closing' && <>
+          <div className="presentation-outcome">
+            <strong>{priority ? `PRIORIDAD SUGERIDA · ${priority.name}` : 'SIN PRIORIDAD EVALUABLE'}</strong>
+            {priority ? <>
+              <span><b>Motivo:</b> {priorityFactors?.length ? priorityFactors.join(' ') : priority.factors[0]}</span>
+              <span><b>Acción propuesta:</b> {priorityResource ? `${priorityResource.id} · ${priorityResource.reason}` : 'Sin recurso sugerido para este sector.'}</span>
+              <small>{priorityResource?.limitation ?? priority.access} Propuesta sujeta a verificación humana; no se ejecutó ningún despacho.</small>
+            </> : <span>Sin reportes recibidos para estimar urgencia. Se requiere relevamiento.</span>}
+          </div>
+          <div className="presentation-summary"><span>{mission.recognizedIds.length}/5 sectores reconocidos</span><span>{mission.collective.receivedCount} reportes recibidos</span><span>{mission.iscat.deployedCount}/3 cápsulas desplegadas</span><span>{mission.collective.sectors.filter((sector) => sector.urgencyPoints !== null).length} recomendaciones con datos recibidos</span></div>
+        </>}
         {presentation.status === 'blocked' && <div className="presentation-blocked"><AlertTriangle size={15} />{presentation.blockedReason}</div>}
       </div>
       <div className="presentation-actions">

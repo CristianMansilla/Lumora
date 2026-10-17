@@ -113,6 +113,9 @@ function PresentationCamera({ store, presentation }: { store: MissionStore; pres
     } else if (playback.scene === 'collective') {
       target.set(-11, .5, 1)
       zoom *= 1.27
+    } else if (playback.scene === 'closing') {
+      target.set(0, 0, 0)
+      zoom *= .8
     } else target.set(0, 0, 0)
     if (size.width < 650) zoom = Math.min(zoom, fitZoom * 1.18)
     shotPosition.current.set(target.x + 34, target.y + 32, target.z + 37)
