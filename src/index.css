@@ -1,0 +1,10 @@
+:root{font-family:Inter,"Segoe UI",Arial,sans-serif;color:#eaf3f8;background:#06121d;font-synthesis:none;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{margin:0;min-width:320px}
+button,a{font:inherit}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer}
+::selection{background:#48d5e7;color:#06121d}
+:focus-visible{outline:2px solid #68e9ef;outline-offset:4px}
+#root{overflow:hidden}
+@media(prefers-reduced-motion:reduce){:root{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}

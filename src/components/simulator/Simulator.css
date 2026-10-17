@@ -1,0 +1,57 @@
+.simulator-section{padding:100px 0 135px;background:linear-gradient(#061722,#0a202e)}
+.sim-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:25px}
+.sim-concept-badge{display:inline-flex;align-items:center;gap:10px;color:#ffb18a;font:750 10px "Courier New",monospace;letter-spacing:.15em}
+.sim-concept-badge span{width:7px;height:7px;border-radius:50%;background:#ff986d;box-shadow:0 0 15px #ff986d}
+.simulator-intro{display:flex;align-items:end;justify-content:space-between;gap:35px;margin-bottom:36px}
+.simulator-intro h2{font-size:clamp(42px,5.3vw,74px);line-height:1.05;letter-spacing:-.055em;margin:18px 0 17px;max-width:860px}
+.simulator-intro h2 em{font-style:normal;color:var(--cyan)}
+.simulator-intro p{font-size:16px;line-height:1.6;color:#a9c1cb;max-width:680px;margin:0}
+.sim-sector-count{display:flex;align-items:center;gap:15px;padding:16px 0 8px;border-top:1px solid #5fd6e376;flex:none}
+.sim-sector-count strong{font:400 49px/1 "Courier New",monospace;color:var(--cyan)}
+.sim-sector-count span{font:700 9px/1.55 "Courier New",monospace;letter-spacing:.12em;color:#92b3bd}
+.simulator-shell{border:1px solid #5dd1dd64;background:#0e2a37;display:grid;grid-template-columns:minmax(0,1fr) 305px;box-shadow:0 35px 85px #0006}
+.simulator-main{min-width:0;border-right:1px solid #75d7df37}
+.scene-frame{height:630px;position:relative;background:#102d3b;overflow:hidden}
+.sim-canvas{display:block!important;width:100%!important;height:100%!important;touch-action:none}
+.scene-loading{height:100%;display:grid;place-items:center;background:radial-gradient(circle at center,#1d5360,#102d3b 62%);color:#a7e7eb;font:700 12px "Courier New",monospace;letter-spacing:.15em}
+.scene-topline,.scene-bottomline{position:absolute;color:#b9e2e5;font:700 9px "Courier New",monospace;letter-spacing:.13em;pointer-events:none;text-shadow:0 1px 8px #0a2836}
+.scene-topline{left:22px;right:22px;top:20px;display:flex;justify-content:space-between}
+.scene-bottomline{left:22px;bottom:20px;background:#0c2939bb;padding:9px 11px;border-left:2px solid var(--cyan)}
+.sim-webgl-fallback{height:100%;display:grid;place-items:center;padding:30px;color:#d1e5e9;text-align:center}
+.sim-controls{min-height:66px;padding:12px 18px 12px 22px;border-top:1px solid #75d7df37;background:#0b2634;display:flex;align-items:center;justify-content:space-between;gap:15px}
+.sim-controls>span{font:700 9px "Courier New",monospace;letter-spacing:.15em;color:#9bbac5;white-space:nowrap}
+.sim-control-buttons{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.sim-control-buttons button{width:37px;height:37px;display:inline-grid;place-items:center;background:#183f4d;color:#c1eaed;border:1px solid #74d7df55;transition:background .2s,border-color .2s}
+.sim-control-buttons button:hover{background:#235563;border-color:var(--cyan)}
+.sim-control-buttons .reset-camera{width:auto;display:inline-flex;gap:8px;padding:0 12px;margin-left:4px;color:#e8f8f7}
+.reset-camera span{font:700 9px "Courier New",monospace;letter-spacing:.08em;white-space:nowrap}
+.simulator-sidebar{display:flex;flex-direction:column;background:linear-gradient(145deg,#122f3e,#0a2432);min-width:0}
+.sidebar-block{padding:24px 23px;border-bottom:1px solid #86dae12a}
+.sidebar-label{font:750 9px "Courier New",monospace;letter-spacing:.15em;color:#7fe5ea;display:flex;justify-content:space-between;gap:8px}
+.sidebar-label b{font-weight:500;color:#89a7b2}
+.sector-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:16px}
+.sector-buttons button{padding:10px 3px;background:#1b4050;border:1px solid #4d82935e;color:#c7dce0;font-size:11px;font-weight:650;transition:background .2s,border-color .2s,color .2s}
+.sector-buttons button:hover,.sector-buttons button.active{background:#58dce1;color:#092633;border-color:#8aebef}
+.status-block{flex:1}
+.selection-kind{color:#ffb18a}
+.status-block h3{font-size:26px;line-height:1.15;letter-spacing:-.035em;margin:17px 0 22px;min-height:30px}
+.status-rows{border-top:1px solid #86dae134}
+.status-rows>div{display:flex;justify-content:space-between;align-items:start;gap:10px;padding:12px 0;border-bottom:1px solid #86dae134;font-size:11px}
+.status-rows span{color:#93adb8}
+.status-rows strong{color:#e0eff0;text-align:right;font-weight:650}
+.status-rows strong[class^="damage-"]{display:flex;align-items:center;gap:6px}
+.status-rows strong i{width:7px;height:7px;border-radius:50%;display:inline-block;background:#77d6ba}
+.status-rows .damage-moderado i{background:#eaba72}.status-rows .damage-alto i{background:#ff8d67}
+.status-observation{margin-top:21px}
+.status-observation>span{color:#78dfe5;font:700 9px "Courier New",monospace;letter-spacing:.12em}
+.status-observation p{font-size:12px;line-height:1.55;color:#bdd1d5;margin:8px 0 0}
+.legend-block{padding-top:20px;padding-bottom:20px}
+.legend-block .sidebar-label{margin-bottom:15px}
+.legend-block>div{display:flex;align-items:center;gap:10px;color:#acc5cd;font-size:11px;margin:9px 0}
+.legend-block i{width:11px;height:11px;display:inline-block;background:#77d6ba;border-radius:2px;flex:none}
+.legend-block .legend-medium{background:#eaba72}.legend-block .legend-high{background:#ff8d67}.legend-block .legend-flood{background:#58a4bb}
+.sim-disclaimer{display:flex;gap:9px;align-items:start;color:#94b1bd;font-size:11px;line-height:1.5;padding:0 23px 21px;margin:0}
+.sim-disclaimer svg{flex:none;color:#79dce2;margin-top:1px}
+@media(max-width:1050px){.simulator-shell{grid-template-columns:1fr}.simulator-main{border-right:0}.scene-frame{height:570px}.simulator-sidebar{display:grid;grid-template-columns:1fr 1fr}.sector-picker{grid-column:1}.status-block{grid-column:2;grid-row:1 / span 2;border-left:1px solid #86dae12a}.legend-block{grid-column:1}.sim-disclaimer{grid-column:1 / -1;padding:20px 23px;margin:0;border-top:1px solid #86dae12a}}
+@media(max-width:650px){.simulator-section{padding:75px 0 90px}.sim-heading{align-items:start;gap:20px}.sim-concept-badge{font-size:8px;line-height:1.4;text-align:right}.simulator-intro{display:block;margin-bottom:27px}.simulator-intro h2{font-size:clamp(39px,10vw,56px)}.simulator-intro p{font-size:14px}.sim-sector-count{margin-top:24px;display:inline-flex}.sim-sector-count strong{font-size:36px}.scene-frame{height:420px}.scene-topline{font-size:8px;left:12px;right:12px;top:13px}.scene-bottomline{font-size:7px;left:12px;bottom:12px;right:12px;line-height:1.45}.sim-controls{display:block;padding:15px}.sim-controls>span{display:block;margin-bottom:10px}.sim-control-buttons{gap:6px}.sim-control-buttons button{width:36px;height:36px}.sim-control-buttons .reset-camera{margin-left:auto}.simulator-sidebar{display:block}.sidebar-block{padding:22px}.status-block{border-left:0}.sim-disclaimer{padding:20px 22px}}
+@media(max-width:390px){.sim-control-buttons .reset-camera span{display:none}.sim-control-buttons .reset-camera{width:36px;justify-content:center;padding:0}.scene-frame{height:375px}}
