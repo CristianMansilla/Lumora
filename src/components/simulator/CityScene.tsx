@@ -53,6 +53,11 @@ function Roads() {
     <mesh position={[-.4,.05,0]} receiveShadow><boxGeometry args={[34,.09,1.65]} /><meshStandardMaterial color="#203f4e" /></mesh>
     {[-14,-8,-3,1,10,16].map((x) => <mesh key={'lane'+x} position={[x,.099,0]}><boxGeometry args={[1.5,.008,.055]} /><meshBasicMaterial color="#a3b7b8" /></mesh>)}
     {[-9.2,-2.8,11.7].flatMap((x) => [-.55,-.33,-.11,.11,.33,.55].map((z,index) => <mesh key={x+'-'+index} position={[x,.103,z]}><boxGeometry args={[.13,.009,.1]} /><meshBasicMaterial color="#d9e8e5" /></mesh>))}
+    {[[-10,-10.1], [12.5,3.6], [-10,-3.9]].map(([x,z], index) => <group key={'road-obstacle-'+index} position={[x,.13,z]}>
+      <mesh rotation={[.12,index * .4,.22]} castShadow><boxGeometry args={[.55,.23,.38]} /><meshStandardMaterial color="#8c8076" roughness={1} /></mesh>
+      <mesh position={[.34,.03,.28]} rotation={[0,.7,0]} castShadow><boxGeometry args={[.27,.12,.22]} /><meshStandardMaterial color="#65747a" /></mesh>
+      <mesh position={[-.31,.01,-.22]} rotation={[0,-.4,0]}><boxGeometry args={[.28,.12,.35]} /><meshStandardMaterial color="#a58a79" /></mesh>
+    </group>)}
   </group>
 }
 
@@ -66,8 +71,9 @@ function RiverAndFloods() {
     {[-1.02,1.02].map((z) => <mesh key={z} position={[5.4,.72,z]}><boxGeometry args={[4.55,.14,.13]} /><meshStandardMaterial color="#d5e9e6" /></mesh>)}
     {[-10,10].map((z) => <mesh key={z} position={[5.4,.055,z]}><boxGeometry args={[3.6,.02,.06]} /><meshBasicMaterial color="#b2edf1" transparent opacity={.5} /></mesh>)}
     <mesh position={[-11.8,.17,10.2]} rotation={[0,.18,0]}><boxGeometry args={[7.2,.035,5.3]} /><meshStandardMaterial color="#58a4bb" transparent opacity={.72} metalness={.2} roughness={.28} /></mesh>
-    <mesh position={[12.8,.17,-10]} rotation={[0,-.14,0]}><boxGeometry args={[7.6,.035,5.25]} /><meshStandardMaterial color="#58a4bb" transparent opacity={.72} metalness={.2} roughness={.28} /></mesh>
-    {[[-11.8,10.2],[12.8,-10]].map(([x,z],index) => <mesh key={index} position={[x,.19,z]}><torusGeometry args={[1.55,.02,6,36]} /><meshBasicMaterial color="#b1f3f2" transparent opacity={.35} /></mesh>)}
+    <mesh position={[12.8,.17,10.2]} rotation={[0,-.14,0]}><boxGeometry args={[7.6,.035,5.25]} /><meshStandardMaterial color="#58a4bb" transparent opacity={.72} metalness={.2} roughness={.28} /></mesh>
+    {[[-11.8,10.2],[12.8,10.2]].map(([x,z],index) => <mesh key={index} position={[x,.19,z]} rotation={[-Math.PI/2,0,0]}><torusGeometry args={[1.55,.02,6,36]} /><meshBasicMaterial color="#b1f3f2" transparent opacity={.35} /></mesh>)}
+    {[[-14.5,12.5],[-8.8,9.5],[10,12.3],[16,9.2]].map(([x,z],index) => <mesh key={'flood-pool-'+index} position={[x,.205,z]} rotation={[-Math.PI/2,0,index * .37]}><circleGeometry args={[.48 + index % 2 * .22,18]} /><meshBasicMaterial color="#8bd2de" transparent opacity={.38} depthWrite={false} /></mesh>)}
   </group>
 }
 

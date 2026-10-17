@@ -90,3 +90,36 @@
 .collective-history{margin-top:13px;max-height:240px;overflow:auto}.collective-history>div{display:flex;gap:10px;border-top:1px solid #7bcbd137;padding:10px 0}.collective-history time{font:700 10px "Courier New",monospace;color:#78e3e7}.collective-history strong{font:700 10px "Courier New",monospace;color:#e0f5ed}.collective-history p{margin:5px 0;color:#d4e3e2;font-size:10px;line-height:1.4}.collective-history small{color:#9ec3ca;font-size:9px}.collective-empty{display:flex;gap:7px;color:#a8c2c8;font-size:10px;line-height:1.4}.collective-empty svg{flex:none}.collective-method{padding:17px 23px 24px;background:#0d2937;color:#afcbd0;font-size:10px;line-height:1.6}.collective-method summary{cursor:pointer;color:#8fe4e6;font:700 10px "Courier New",monospace}.collective-method p{margin:11px 0 0}
 @media(max-width:1050px){.simulator-section.collective-mode .simulator-shell{grid-template-columns:1fr}.simulator-section.collective-mode .simulator-sidebar{display:block}.sim-mode-tabs{position:static}.collective-panel{display:grid;grid-template-columns:1fr 1fr}.collective-head{grid-column:1 / -1}.collective-block{min-width:0}.collective-panel>.collective-block:nth-of-type(2){grid-column:1 / -1}.collective-method{grid-column:1 / -1}}
 @media(max-width:650px){.collective-panel{display:block}.collective-head,.collective-block,.collective-method{padding-left:20px;padding-right:20px}.collective-head h3{font-size:31px}.collective-summary strong{font-size:20px}.sim-mode-tabs button{font-size:9px}}
+
+/* Presentation layout: one wide city, followed by full-height information panels. */
+.simulator-shell,.simulator-section.collective-mode .simulator-shell{display:block;min-width:0}
+.simulator-indicators{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:#071f2b;border-bottom:1px solid #70dbe159}
+.simulator-indicators>div{min-width:0;padding:16px 20px;border-right:1px solid #70dbe130;display:grid;gap:5px}
+.simulator-indicators>div:last-child{border-right:0}
+.simulator-indicators span{color:#76e1e6;font:700 9px "Courier New",monospace;letter-spacing:.14em}
+.simulator-indicators strong{color:#e9f6f3;font-size:17px;line-height:1.15}
+.simulator-indicators small{color:#9bbac1;font-size:10px;line-height:1.3}
+.simulator-main{border-right:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.scene-frame{grid-column:1/-1;height:clamp(540px,55vw,760px)}
+.scene-selection{position:absolute;right:18px;bottom:18px;max-width:min(48%,380px);padding:9px 12px;background:#0c2e3ce8;border:1px solid #82e9e5aa;color:#e6f7f4;text-align:left;font:700 10px/1.3 "Courier New",monospace;cursor:pointer}
+.scene-selection span{color:#7de5e7;margin-left:8px;white-space:nowrap}
+.scene-selection:hover{background:#1c4a56}
+.mission-controls,.network-controls,.iscat-controls{min-width:0;min-height:92px;border-right:1px solid #75d7df37}
+.sim-controls{grid-column:1/-1}
+.simulator-sidebar{display:block;max-height:none;overflow:visible;border-top:1px solid #81dce244}
+.sim-mode-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:static}
+.sim-mode-tabs button{padding:12px 7px;font-size:10px;line-height:1.35;min-width:0}
+.sim-tab-content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;min-width:0}
+.sim-tab-content>.sidebar-block{min-width:0;border-right:1px solid #86dae12a}
+.sim-tab-content>.status-block{grid-column:1/-1;border-left:0}
+.sim-tab-content>.sim-disclaimer{grid-column:1/-1;padding:20px 23px;margin:0;border-top:1px solid #86dae12a}
+.sim-tab-content>.iscat-panel,.sim-tab-content>.collective-panel{grid-column:1/-1}
+.sim-tab-content>.collective-panel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));min-width:0}
+.collective-panel>.collective-head,.collective-panel>.collective-block:nth-of-type(2),.collective-panel>.collective-method{grid-column:1/-1}
+.collective-sectors{grid-template-columns:repeat(2,minmax(0,1fr))}
+.collective-resources{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sim-tab-content .mission-events,.sim-tab-content .collective-history,.sim-tab-content .iscat-log .mission-events{max-height:none;overflow:visible}
+.sim-tab-content .iscat-panel>summary{cursor:default}
+@media(max-width:1050px){.simulator-main{grid-template-columns:1fr}.scene-frame{height:560px}.simulator-indicators{grid-template-columns:repeat(2,minmax(0,1fr))}.simulator-indicators>div:nth-child(2){border-right:0}.simulator-indicators>div:nth-child(-n+2){border-bottom:1px solid #70dbe130}.mission-controls,.network-controls,.iscat-controls{border-right:0}.sim-tab-content>.status-block{grid-row:auto}.sim-tab-content>.network-overview,.sim-tab-content>.network-beacons,.sim-tab-content>.network-reports,.sim-tab-content>.network-log{grid-column:auto}.sim-tab-content>.network-log{grid-row:auto}}
+@media(max-width:650px){.simulator-indicators>div{padding:12px}.simulator-indicators span{font-size:8px}.simulator-indicators strong{font-size:14px}.simulator-indicators small{font-size:9px}.scene-frame{height:430px}.scene-selection{left:12px;right:12px;bottom:48px;max-width:none;font-size:9px}.sim-mode-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.sim-mode-tabs button:last-child{grid-column:1/-1}.sim-tab-content,.sim-tab-content>.collective-panel{display:block}.sim-tab-content>.sidebar-block{border-right:0}.collective-sectors,.collective-resources{grid-template-columns:1fr}.mission-controls,.network-controls,.iscat-controls{min-height:0}}
+@media(max-width:390px){.scene-frame{height:390px}.scene-selection{bottom:53px}}

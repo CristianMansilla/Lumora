@@ -64,7 +64,10 @@ export function route(from: NodeId, to: NodeId, failed: boolean): NodeId[] | nul
 }
 
 type MutableReport = Report & { hop: { from: NodeId; to: NodeId; start: number; end: number } | null }
-const priorityFor = (id: string) => id === 'south' || id === 'west' ? 'Alta (indicativa)' : id === 'north' || id === 'east' ? 'Media (indicativa)' : 'Baja (indicativa)'
+const priorityFor = (id: string) => {
+  const damage = sectors.find((sector) => sector.id === id)?.damage
+  return damage === 'Alto' ? 'Alta (indicativa)' : damage === 'Moderado' ? 'Media (indicativa)' : 'Baja (indicativa)'
+}
 const nameOf = (id: NodeId) => id === 'hub' ? 'centro de operaciones' : id === 'messenger' ? 'dron mensajero' : BEACONS.find((beacon) => beacon.id === id)?.name ?? id
 
 export function createNetworkModel() {

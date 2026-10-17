@@ -23,14 +23,16 @@ export default function SimulatorSection() {
   const mission = useSyncExternalStore(store.subscribe, store.getSnapshot)
   const [selected, setSelected] = useState<Selection | DroneSelection | NetworkSelection | BaseSelection | IscatSelection>(sectors[4])
   const [resetKey, setResetKey] = useState(0)
-  const [mode, setMode] = useState<'operation' | 'collective'>('operation')
+  const [mode, setMode] = useState<'hugin' | 'munin' | 'iscat' | 'collective' | 'selection'>('hugin')
   const [command, setCommand] = useState<CameraCommand>({ type: 'left', key: 0 })
   const issue = (type: CameraCommand['type']) => setCommand((current) => ({ type, key: current.key + 1 }))
-  const selectDrone = useCallback((id: string) => setSelected({ kind: 'Dron', id, name: id }), [])
-  const selectNetwork = useCallback((id: string) => setSelected({ kind: id === 'messenger' ? 'Mensajero' : 'Baliza', id, name: id === 'messenger' ? 'MUNIN-M1' : BEACONS.find((beacon) => beacon.id === id)?.name ?? id }), [])
-  const selectIscat = useCallback((id: string) => setSelected({ kind: 'ISCAT', id, name: id }), [])
+  const selectScene = useCallback((item: Selection) => { setSelected(item); setMode('selection') }, [])
+  const selectDrone = useCallback((id: string) => { setSelected({ kind: 'Dron', id, name: id }); setMode('selection') }, [])
+  const selectNetwork = useCallback((id: string) => { setSelected({ kind: id === 'messenger' ? 'Mensajero' : 'Baliza', id, name: id === 'messenger' ? 'MUNIN-M1' : BEACONS.find((beacon) => beacon.id === id)?.name ?? id }); setMode('selection') }, [])
+  const selectIscat = useCallback((id: string) => { setSelected({ kind: 'ISCAT', id, name: id }); setMode('selection') }, [])
   const selectBase = useCallback(() => {
     setSelected({ kind: 'Base móvil', id: 'mobile-base', name: 'Base móvil LUMORA' })
+    setMode('selection')
     setCommand((current) => ({ type: 'base', key: current.key + 1 }))
   }, [])
   const restart = () => { store.reset(); setSelected(sectors[4]) }
@@ -52,8 +54,15 @@ export default function SimulatorSection() {
   const droneIndex = selectedDrone ? DRONE_PLANS.indexOf(selectedDrone) : -1
   const unverified = selected.kind === 'Sector' && !mission.recognizedIds.includes(selected.id)
   const baseStatus = mission.phase === 'idle' ? 'Lista para despliegue' : mission.phase === 'paused' ? 'Despliegue pausado' : mission.elapsed >= MISSION_DURATION ? 'Drones replegados' : 'Desplegando HUGIN'
+  const tabs = [
+    { id: 'hugin', label: 'Reconocimiento HUGIN' },
+    { id: 'munin', label: 'Comunicaciones MUNIN' },
+    { id: 'iscat', label: 'Sensores ISCAT' },
+    { id: 'collective', label: 'Conciencia Colectiva' },
+    { id: 'selection', label: 'Detalles de selección' },
+  ] as const
 
-  return <section className={`simulator-section${mode === 'collective' ? ' collective-mode' : ''}`} id="simulador" ref={sectionRef}>
+  return <section className="simulator-section" id="simulador" ref={sectionRef}>
     <div className="container">
       <div className="sim-heading reveal">
         <div className="section-kicker"><span>05</span><i />SIMULADOR</div>
@@ -64,10 +73,17 @@ export default function SimulatorSection() {
         <div className="sim-sector-count"><strong>05</strong><span>SECTORES<br />EXPLORABLES</span></div>
       </div>
       <div className="simulator-shell reveal">
+        <div className="simulator-indicators" aria-label="Estado general de la simulación">
+          <div><span>HUGIN</span><strong>{mission.recognizedIds.length}/5 sectores</strong><small>{mission.phase === 'idle' ? 'En espera' : mission.phase === 'paused' ? 'Pausado' : mission.phase === 'complete' ? 'Completado' : 'Reconociendo'}</small></div>
+          <div><span>MUNIN</span><strong>{mission.network.linksAvailable}/5 enlaces</strong><small>{mission.network.started ? mission.network.failed ? 'Enlace interrumpido' : 'Red activa' : 'En espera'}</small></div>
+          <div><span>ISCAT</span><strong>{mission.iscat.deployedCount}/3 cápsulas</strong><small>{mission.iscat.indicationCount} indicios · {mission.iscat.receivedAlerts} alertas recibidas</small></div>
+          <div><span>CONCIENCIA COLECTIVA</span><strong>{mission.collective.receivedCount} reportes recibidos</strong><small>{mission.collective.unknownCount}/5 sectores sin información</small></div>
+        </div>
         <div className="simulator-main">
           <div className="scene-frame">
-            {sceneReady ? <Suspense fallback={<div className="scene-loading">Preparando ciudad 3D…</div>}><SimulatorCanvas selectedId={selected.kind === 'Sector' || selected.kind === 'Edificio' ? selected.id : ''} selectedDroneId={selected.kind === 'Dron' ? selected.id : null} selectedNetworkId={selected.kind === 'Baliza' || selected.kind === 'Mensajero' ? selected.id : null} selectedIscatId={selected.kind === 'ISCAT' ? selected.id : null} selectedBase={selected.kind === 'Base móvil'} onSelect={setSelected} onSelectDrone={selectDrone} onSelectNetwork={selectNetwork} onSelectIscat={selectIscat} onSelectBase={selectBase} recognizedIds={mission.recognizedIds} network={mission.network} store={store} resetKey={resetKey} command={command} /></Suspense> : <div className="scene-loading">Preparando ciudad 3D…</div>}
+            {sceneReady ? <Suspense fallback={<div className="scene-loading">Preparando ciudad 3D…</div>}><SimulatorCanvas selectedId={selected.kind === 'Sector' || selected.kind === 'Edificio' ? selected.id : ''} selectedDroneId={selected.kind === 'Dron' ? selected.id : null} selectedNetworkId={selected.kind === 'Baliza' || selected.kind === 'Mensajero' ? selected.id : null} selectedIscatId={selected.kind === 'ISCAT' ? selected.id : null} selectedBase={selected.kind === 'Base móvil'} onSelect={selectScene} onSelectDrone={selectDrone} onSelectNetwork={selectNetwork} onSelectIscat={selectIscat} onSelectBase={selectBase} recognizedIds={mission.recognizedIds} network={mission.network} store={store} resetKey={resetKey} command={command} /></Suspense> : <div className="scene-loading">Preparando ciudad 3D…</div>}
             <div className="scene-topline" aria-hidden="true"><span>LUMORA / ESCENARIO 01</span><span>VISTA ORBITAL</span></div>
+            <button type="button" className="scene-selection" onClick={() => setMode('selection')} title="Ver detalles de selección">SELECCIONADO · {selected.name} <span>VER DETALLES →</span></button>
             <div className="scene-bottomline" aria-hidden="true">ARRASTRÁ PARA ROTAR · RUEDA O PELLIZCO PARA ACERCAR</div>
           </div>
           <div className="mission-controls" aria-label="Controles de reconocimiento">
@@ -92,12 +108,12 @@ export default function SimulatorSection() {
             </div>
           </div>
         </div>
-        <aside className="simulator-sidebar" aria-label="Estado del escenario">
+        <div className="simulator-sidebar" aria-label="Paneles del escenario">
           <div className="sim-mode-tabs" role="tablist" aria-label="Modo del simulador">
-            <button type="button" role="tab" aria-selected={mode === 'operation'} className={mode === 'operation' ? 'active' : ''} onClick={() => setMode('operation')}>Operación</button>
-            <button type="button" role="tab" aria-selected={mode === 'collective'} className={mode === 'collective' ? 'active' : ''} onClick={() => setMode('collective')}>Conciencia Colectiva</button>
+            {tabs.map((tab) => <button key={tab.id} type="button" role="tab" aria-selected={mode === tab.id} className={mode === tab.id ? 'active' : ''} onClick={() => setMode(tab.id)}>{tab.label}</button>)}
           </div>
-          {mode === 'operation' ? <>
+          <div className="sim-tab-content" role="tabpanel">
+          {mode === 'hugin' && <>
           <div className="sidebar-block mission-status">
             <span className="sidebar-label">RECONOCIMIENTO HUGIN <b>{mission.percent}%</b></span>
             <div className="mission-progress" role="progressbar" aria-valuenow={mission.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Progreso de misión"><span style={{ width: `${mission.percent}%` }} /></div>
@@ -110,6 +126,8 @@ export default function SimulatorSection() {
           </div>
           <div className="sidebar-block drone-picker"><span className="sidebar-label">DESPLIEGUE <b>CONFIGURACIÓN FUTURA</b></span><div className="drone-buttons"><button type="button" className={selected.kind === 'Base móvil' ? 'active' : ''} onClick={selectBase}><span className="drone-dot" style={{ background: '#f4c95c', color: '#f4c95c' }} /><strong>BASE MÓVIL LUMORA</strong><span>{baseStatus}</span></button></div></div>
           <div className="sidebar-block drone-picker"><span className="sidebar-label">FLOTA AÉREA <b>03 UNIDADES</b></span><div className="drone-buttons">{DRONE_PLANS.map((plan, index) => <button type="button" key={plan.id} className={selected.id === plan.id ? 'active' : ''} onClick={() => selectDrone(plan.id)}><span className="drone-dot" style={{ background: plan.color }} /><strong>{plan.id}</strong><span>{mission.droneStatuses[index]}</span></button>)}</div></div>
+          </>}
+          {mode === 'selection' && <>
           <div className="sidebar-block status-block" aria-live="polite">
             <div className="sidebar-label">ELEMENTO SELECCIONADO <span className="selection-kind">{selected.kind.toUpperCase()}</span></div>
             <h3>{selected.name}</h3>
@@ -118,16 +136,20 @@ export default function SimulatorSection() {
             </div>
             <div className="status-observation"><span>{selectedDrone || selected.kind === 'Mensajero' ? 'MISIÓN' : 'OBSERVACIONES'}</span><p>{selectedDrone ? selectedDrone.mission : selectedIscat ? iscatState?.report?.observation ?? 'Cápsula sensora conceptual. Su lectura ficticia se genera al iniciar el monitoreo y requiere verificación humana si registra un indicio.' : selectedBeacon ? 'Nodo local de la red mesh conceptual. Sus enlaces y reportes dependen del estado de la misión.' : selected.kind === 'Mensajero' ? 'Recoge datos junto a un nodo aislado, los lleva a un nodo conectado y regresa a base.' : selected.kind === 'Base móvil' ? 'Posible configuración futura para desplegar HUGIN e ISCAT y apoyar la coordinación. El vehículo, sus compuertas y su rampa son una representación conceptual; no se ha fabricado ni validado.' : unverified ? 'El reconocimiento visual simulado aún no llegó a este sector.' : selected.kind === 'Sector' || selected.kind === 'Edificio' ? selected.observations : ''}</p></div>
           </div>
-          <div className="sidebar-block mission-log"><span className="sidebar-label">REGISTRO DE EVENTOS <b>{mission.events.length}</b></span><div className="mission-events" role="log" aria-label="Eventos de la misión">{mission.events.length ? [...mission.events].reverse().map((event, index) => <div key={`${event.time}-${index}`}><time>{String(Math.floor(event.time / 60)).padStart(2, '0')}:{String(Math.floor(event.time % 60)).padStart(2, '0')}</time><span>{event.text}</span></div>) : <p>La misión aún no comenzó.</p>}</div></div>
-          <IscatPanel iscat={mission.iscat} network={mission.network} selectedId={selected.id} onSelect={selectIscat} />
-          <NetworkPanel network={mission.network} selectedId={selected.id} onSelect={selectNetwork} />
+          </>}
+          {mode === 'hugin' && <div className="sidebar-block mission-log"><span className="sidebar-label">REGISTRO DE EVENTOS <b>{mission.events.length}</b></span><div className="mission-events" role="log" aria-label="Eventos de la misión">{mission.events.length ? [...mission.events].reverse().map((event, index) => <div key={`${event.time}-${index}`}><time>{String(Math.floor(event.time / 60)).padStart(2, '0')}:{String(Math.floor(event.time % 60)).padStart(2, '0')}</time><span>{event.text}</span></div>) : <p>La misión aún no comenzó.</p>}</div></div>}
+          {mode === 'iscat' && <IscatPanel iscat={mission.iscat} network={mission.network} selectedId={selected.id} onSelect={selectIscat} />}
+          {mode === 'munin' && <NetworkPanel network={mission.network} selectedId={selected.id} onSelect={selectNetwork} />}
+          {mode === 'selection' && <>
           <div className="sidebar-block legend-block">
             <span className="sidebar-label">LEYENDA DEL ESCENARIO</span>
             <div><i className="legend-low" /> Daño bajo</div><div><i className="legend-medium" /> Daño moderado</div><div><i className="legend-high" /> Daño alto / escombros</div><div><i className="legend-flood" /> Zona inundada</div><div><i className="legend-link" /> Enlace disponible</div><div><i className="legend-broken" /> Enlace interrumpido / nodo aislado</div>
           </div>
           <p className="sim-disclaimer"><Info size={16} /> Datos, lecturas, rutas y enlaces predeterminados y ficticios. ISCAT no usa sensores ni micrófonos reales; la conectividad y la respuesta operativa no han sido validadas.</p>
-          </> : <CollectivePanel data={mission.collective} clock={mission.clock} selectedId={selected.id} onSelectSector={(sectorId) => { const sector = sectors.find((item) => item.id === sectorId); if (sector) setSelected(sector) }} />}
-        </aside>
+          </>}
+          {mode === 'collective' && <CollectivePanel data={mission.collective} clock={mission.clock} selectedId={selected.id} onSelectSector={(sectorId) => { const sector = sectors.find((item) => item.id === sectorId); if (sector) setSelected(sector) }} />}
+          </div>
+        </div>
       </div>
     </div>
   </section>
